@@ -5,15 +5,16 @@ using UnityEngine;
 
 namespace managers {
     public class ConnectionNotificationManager : NetworkBehaviour {
-        public static ConnectionNotificationManager Singleton { get; internal set; }
+        public static ConnectionNotificationManager Singleton { get; private set; }
 
         public enum ConnectionStatus {
             Connected,
             Disconnected
         }
 
-        public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
-        public event Action<ulong[]> OnPlayerListResponse;
+        public event Action<ulong[]> OnPlayerListUpdate;
+        
+        //TODO A LIST OF THE CURRENTLY CONNECTED PLAYERS?
 
         private void Awake() {
             if (Singleton != null) {
@@ -35,46 +36,35 @@ namespace managers {
                 throw new Exception(
                     $"There is no {nameof(NetworkManager)} for the {nameof(ConnectionNotificationManager)} to do stuff with! Please add a {nameof(NetworkManager)} to the scene.");
             }
-
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
-            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectCallback;
         }
 
-        public override void OnDestroy() {
-            if (NetworkManager.Singleton != null) {
+        public override void OnNetworkSpawn() {
+            if (IsServer) {
+                NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnectedCallback;
+                NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnectCallback;
+            }
+        }
+
+        public override void OnNetworkDespawn() {
+            if (IsServer) {
                 NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectedCallback;
                 NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnectCallback;
             }
-            base.OnDestroy();
         }
 
+        //ONLY THE SERVER IS REGISTERED FOR THESE EVENTS
         private void OnClientConnectedCallback(ulong clientId) {
-            OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
+            UpdateConnectedClientsClientRpc(NetworkManager.Singleton.ConnectedClientsIds.ToArray());
         }
 
+        //ONLY THE SERVER IS REGISTERED FOR THESE EVENTS
         private void OnClientDisconnectCallback(ulong clientId) {
-            OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Disconnected);
+            UpdateConnectedClientsClientRpc(NetworkManager.Singleton.ConnectedClientsIds.ToArray());
         }
-
-        public ulong GetMyClientId() {
-            return NetworkManager.Singleton.IsConnectedClient ? NetworkManager.Singleton.LocalClientId : Convert.ToUInt64(null);
-        }
-
-        // public void RequestConnectedClientIds() {
-        //     GetConnectedClientIdsServerRpc();
-        // }
-
-        [ServerRpc]
-        private void SendConnectedClientIdsServerRpc() {
-            Debug.Log("ServerRPC - GetConnectedClientIdsServerRpc");
-            var clientIds = NetworkManager.Singleton.ConnectedClientsIds.ToArray();
-            UpdateConnectedClientsClientRpc(clientIds);
-        }
-
+        
         [ClientRpc]
-        public void UpdateConnectedClientsClientRpc(ulong[] clientIds) {
-            Debug.Log("ClientRPC - UpdateConnectedClientsClientRpc");
-            OnPlayerListResponse?.Invoke(clientIds);
+        private void UpdateConnectedClientsClientRpc(ulong[] clientIds) {
+            OnPlayerListUpdate?.Invoke(clientIds);
         }
     }
 }
