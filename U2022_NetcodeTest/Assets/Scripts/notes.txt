@@ -1,0 +1,10 @@
+### DELAY NETWORK VARIABLE ON CHANGE REGISTRATION 
+public override void OnNetworkSpawn()
+{
+    if (IsServer)
+    {
+        // Wait until next frame before registering on OnValueChanged to make sure NetworkAnimator has spawned before.
+        StartCoroutine(WaitToRegisterOnLifeStateChanged());
+    }
+}
+

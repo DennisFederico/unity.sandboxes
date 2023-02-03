@@ -1,15 +1,18 @@
 using System;
-using DefaultNamespace;
+using System.Linq;
+using UI;
+using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Serialization;
 using static managers.ConnectionNotificationManager;
 
 namespace managers {
-    public class ScoreManager : MonoBehaviour {
+    public class ScoreManager : MonoBehaviour{
         public static ScoreManager Singleton { get; private set; }
 
         [SerializeField] private RectTransform scorePanel;
-        [SerializeField] private PlayerScore[] playerScores;
-
+        [SerializeField] private PlayerScore[] playerScorePanels;
+        
         private void Awake() {
             if (Singleton != null) {
                 Debug.LogError($"There's more than one ScoreManager in the scene! {transform} - {Singleton}");
@@ -18,7 +21,6 @@ namespace managers {
             }
 
             Singleton = this;
-            scorePanel.gameObject.SetActive(false);
         }
 
         private void Start() {
@@ -33,20 +35,18 @@ namespace managers {
 
         private void OnClientConnectionEvent(ulong clientId, ConnectionStatus connectionStatus) {
             Debug.Log($"client {clientId} - {connectionStatus}");
-
-            if (connectionStatus == ConnectionStatus.Connected && clientId == ConnectionNotificationManager.Singleton.GetMyClientId()) {
-                scorePanel.gameObject.SetActive(true);
-                //Assume first connection, check other players
-                ConnectionNotificationManager.Singleton.RequestConnectedClientIds();
-            }
-
             var player = Convert.ToInt32(clientId);
-            playerScores[player].gameObject.SetActive(connectionStatus == ConnectionStatus.Connected);
+            playerScorePanels[player].gameObject.SetActive(connectionStatus == ConnectionStatus.Connected);
+            if (NetworkManager.Singleton.IsServer) {
+                Debug.Log($"I AM SERVER!!!");
+                ConnectionNotificationManager.Singleton.UpdateConnectedClientsClientRpc(NetworkManager.Singleton.ConnectedClientsIds.ToArray());
+            }
         }
 
         private void EnableScorePanels(ulong[] players) {
+            Debug.Log($"ENABLE PANELS({players.Length}) {players}");
             foreach (var aClientId in players) {
-                playerScores[Convert.ToInt32(aClientId)].gameObject.SetActive(true);
+                playerScorePanels[Convert.ToInt32(aClientId)].gameObject.SetActive(true);
             }
         }
 

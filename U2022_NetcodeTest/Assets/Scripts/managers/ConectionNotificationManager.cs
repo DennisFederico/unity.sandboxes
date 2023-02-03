@@ -60,19 +60,19 @@ namespace managers {
             return NetworkManager.Singleton.IsConnectedClient ? NetworkManager.Singleton.LocalClientId : Convert.ToUInt64(null);
         }
 
-        public void RequestConnectedClientIds() {
-            GetConnectedClientIdsServerRpc();
-        }
+        // public void RequestConnectedClientIds() {
+        //     GetConnectedClientIdsServerRpc();
+        // }
 
-        [ServerRpc(RequireOwnership = false)]
-        private void GetConnectedClientIdsServerRpc() {
+        [ServerRpc]
+        private void SendConnectedClientIdsServerRpc() {
             Debug.Log("ServerRPC - GetConnectedClientIdsServerRpc");
             var clientIds = NetworkManager.Singleton.ConnectedClientsIds.ToArray();
             UpdateConnectedClientsClientRpc(clientIds);
         }
 
         [ClientRpc]
-        private void UpdateConnectedClientsClientRpc(ulong[] clientIds) {
+        public void UpdateConnectedClientsClientRpc(ulong[] clientIds) {
             Debug.Log("ClientRPC - UpdateConnectedClientsClientRpc");
             OnPlayerListResponse?.Invoke(clientIds);
         }

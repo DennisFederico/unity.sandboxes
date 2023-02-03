@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-namespace DefaultNamespace {
+namespace UI {
     public class PlayerScore : MonoBehaviour {
         [SerializeField] private TextMeshProUGUI scoreText;
         private int _currentScore;
