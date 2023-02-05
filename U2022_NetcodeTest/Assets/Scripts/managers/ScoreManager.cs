@@ -8,6 +8,9 @@ namespace managers {
         public static ScoreManager Singleton { get; private set; }
 
         [SerializeField] private PlayerScore[] playerScorePanels;
+        [SerializeField] private int localScore;
+
+        public event Action<int> NewLocalScore;
         //TODO SHOULD CHANGE TO A STRUCTURE WITH CUSTOM SERIALIZATION, FROM A MAP WITH ID|SCORE INSTEAD OF USING INDEX 
         private NetworkList<int> _playerScores;
 
@@ -52,6 +55,11 @@ namespace managers {
             }
         }
 
+        public void IncrementLocalPlayerScore() {
+            localScore += 10;
+            NewLocalScore?.Invoke(localScore);
+        }
+        
         [ServerRpc(RequireOwnership = false)]
         public void IncrementPlayerScoreServerRpc(ulong clientId) {
             Debug.Log($"Server increase score for {clientId}");
