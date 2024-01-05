@@ -11,15 +11,11 @@ public class GridTester : MonoBehaviour {
 
     private void Start() {
         _camera = Camera.main;
-        _grid = new Grid(width, height, cellSize);
-        
-        for (int x = 0; x < _grid.Width; x++) {
-            for (int y = 0; y < _grid.Height; y++) {
-                _grid.SetValue(x, y,  y * width + x);
-            }
-        }
-
+        _grid = new Grid(transform.localPosition, width, height, cellSize);
         _grid.DebugGrid();
+        
+        new Grid(new Vector3(50, 20), 2, 5, 5).DebugGrid();
+        new Grid(new Vector3(20, 40), 5, 3, 8).DebugGrid();
     }
     
     private void Update() {

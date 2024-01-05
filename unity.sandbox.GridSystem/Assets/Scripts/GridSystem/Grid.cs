@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace GridSystem {
     public class Grid {
+        private Vector3 _origin;
         private int _width;
         private int _height;
 
@@ -26,16 +27,28 @@ namespace GridSystem {
             set => _cellSize = value;
         }
 
-        public Grid(int width, int height, float cellSize) {
+        public Grid(Vector3 origin, int width, int height, float cellSize) {
+            _origin = origin;
             _width = width;
             _height = height;
             _cellSize = cellSize;
             _gridArray = new int[_width, _height];
+            InitGrid();
+        }
+        
+        private void InitGrid() {
+            for (int x = 0; x < _width; x++) {
+                for (int y = 0; y < _height; y++) {
+                    Debug.Log($"Cell {x}, {y}");
+                    _gridArray[x, y] = y * _width + x;
+                    // _gridArray.SetValue(y * _width + x, x, y);
+                }
+            }
         }
 
         //This is the left bottom corner of the cell
         private Vector3 GetWorldPosition(int x, int y) {
-            return new Vector3(x, y) * _cellSize;
+            return new Vector3(x, y) * _cellSize + _origin;
         }
 
         public void SetValue(int x, int y, int value) {
@@ -86,8 +99,8 @@ namespace GridSystem {
         private bool IsValidPosition(int x, int y) => x >= 0 && y >= 0 && x < _width && y < _height;
 
         private bool TryGetXY(Vector3 worldPosition, out int x, out int y) {
-            x = Mathf.FloorToInt(worldPosition.x / _cellSize);
-            y = Mathf.FloorToInt(worldPosition.y / _cellSize);
+            x = Mathf.FloorToInt((worldPosition -_origin).x / _cellSize);
+            y = Mathf.FloorToInt((worldPosition - _origin).y / _cellSize);
             return IsValidPosition(x, y);
         }
 
