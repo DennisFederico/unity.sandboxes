@@ -2,15 +2,14 @@ using CodeMonkey.Utils;
 using UnityEngine;
 
 namespace GridSystem {
-    public class Grid {
-        private Vector3 _origin;
+    public class GenericGrid<TGridType> {
+        private readonly Vector3 _origin;
         private int _width;
         private int _height;
 
         private float _cellSize;
 
-        //TODO CONVERT TO SINGLE DIMENSION ARRAY
-        private int[,] _gridArray;
+        private readonly TGridType[,] _gridArray;
 
         public int Width {
             get => _width;
@@ -27,77 +26,78 @@ namespace GridSystem {
             set => _cellSize = value;
         }
 
-        public Grid(Vector3 origin, int width, int height, float cellSize) {
+        public GenericGrid(Vector3 origin, int width, int height, float cellSize) {
             _origin = origin;
             _width = width;
             _height = height;
             _cellSize = cellSize;
-            _gridArray = new int[_width, _height];
+            _gridArray = new TGridType[_width, _height];
             InitGrid();
         }
         
+        //TODO do we need this?
         private void InitGrid() {
             for (int x = 0; x < _width; x++) {
                 for (int y = 0; y < _height; y++) {
                     Debug.Log($"Cell {x}, {y}");
-                    _gridArray[x, y] = y * _width + x;
+                    _gridArray[x, y] = default;
                     // _gridArray.SetValue(y * _width + x, x, y);
                 }
             }
         }
-
-        //This is the left bottom corner of the cell
-        private Vector3 GetWorldPosition(int x, int y) {
-            return new Vector3(x, y) * _cellSize + _origin;
-        }
-
-        public void SetValue(int x, int y, int value) {
-            if (IsValidPosition(x, y)) {
-                _gridArray[x, y] = value;
-            }
-        }
         
-        public int GetValue(int x, int y) {
+        public TGridType GetValue(int x, int y) {
             if (IsValidPosition(x, y)) {
                 return _gridArray[x, y];
             }
 
-            return -1;
+            return default;
         }
         
-        public void SetValue(Vector3 worldPosition, int value) {
-            if (TryGetXY(worldPosition, out var x, out var y)) {
-                _gridArray[x, y] = value;
-            }
-        }
-        
-        public bool TrySetValue(Vector3 worldPosition, int value) {
-            if (TryGetXY(worldPosition, out var x, out var y)) {
-                _gridArray[x, y] = value;
-                return true;
-            }
-
-            return false;
-        }
-        
-        public int GetValue(Vector3 worldPosition) {
+        public TGridType GetValue(Vector3 worldPosition) {
             if (TryGetXY(worldPosition, out var x, out var y)) {
                 return _gridArray[x, y];
             }
-            return -1;
+            return default;
         }
         
-        public bool TryGetValue(Vector3 worldPosition, out int value) {
+        public bool TryGetValue(Vector3 worldPosition, out TGridType value) {
             if (TryGetXY(worldPosition, out var x, out var y)) {
                 value = _gridArray[x, y];
                 return true;
             }
-            value = -1;
+            value = default;
+            return false;
+        }
+        
+        public void SetValue(int x, int y, TGridType value) {
+            if (IsValidPosition(x, y)) {
+                _gridArray[x, y] = value;
+            }
+        }
+        
+        public void SetValue(Vector3 worldPosition, TGridType value) {
+            if (TryGetXY(worldPosition, out var x, out var y)) {
+                _gridArray[x, y] = value;
+            }
+        }
+        
+        public bool TrySetValue(Vector3 worldPosition, TGridType value) {
+            if (TryGetXY(worldPosition, out var x, out var y)) {
+                _gridArray[x, y] = value;
+                return true;
+            }
+
             return false;
         }
 
         private bool IsValidPosition(int x, int y) => x >= 0 && y >= 0 && x < _width && y < _height;
 
+        //This is the left bottom corner of the cell
+        private Vector3 GetWorldPosition(int x, int y) {
+            return new Vector3(x, y) * _cellSize + _origin;
+        }
+        
         private bool TryGetXY(Vector3 worldPosition, out int x, out int y) {
             x = Mathf.FloorToInt((worldPosition -_origin).x / _cellSize);
             y = Mathf.FloorToInt((worldPosition - _origin).y / _cellSize);

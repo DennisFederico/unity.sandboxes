@@ -1,21 +1,21 @@
+using GridSystem;
 using UnityEngine;
-using Grid = GridSystem.Grid;
 
-public class GridTester : MonoBehaviour {
+public class GridOfIntsTester : MonoBehaviour {
     [SerializeField] private int width;
     [SerializeField] private int height;
     [SerializeField] private float cellSize;
 
     private Camera _camera;
-    private Grid _grid;
+    private GridOfInts _grid;
 
     private void Start() {
         _camera = Camera.main;
-        _grid = new Grid(transform.localPosition, width, height, cellSize);
+        _grid = new GridOfInts(transform.localPosition, width, height, cellSize);
         _grid.DebugGrid();
         
-        new Grid(new Vector3(50, 20), 2, 5, 5).DebugGrid();
-        new Grid(new Vector3(20, 40), 5, 3, 8).DebugGrid();
+        new GridOfInts(new Vector3(50, 20), 2, 5, 5).DebugGrid();
+        new GridOfInts(new Vector3(20, 40), 5, 3, 8).DebugGrid();
     }
     
     private void Update() {
