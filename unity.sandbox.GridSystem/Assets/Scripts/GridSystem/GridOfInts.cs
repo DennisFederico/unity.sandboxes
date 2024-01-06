@@ -1,4 +1,3 @@
-using System;
 using CodeMonkey.Utils;
 using UnityEngine;
 
@@ -11,13 +10,6 @@ namespace GridSystem {
         private float _cellSize;
 
         private readonly int[,] _gridArray;
-        
-        //Event Handling (TODO. Could we move this out of here?)
-        public event EventHandler<OnGridValueChangedEventArgs> OnGridValueChanged;
-        public class OnGridValueChangedEventArgs: EventArgs {
-            public int x;
-            public int y;
-        }
 
         public int Width {
             get => _width;

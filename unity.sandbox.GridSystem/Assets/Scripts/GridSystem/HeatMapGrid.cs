@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace GridSystem {
     public class HeatMapGrid {
-        public const int HEAT_MAP_MAX_VALUE = 100;
-        public const int HEAT_MAP_MIN_VALUE = 0;
+        private const int HeatMapMaxValue = 100;
+        private const int HeatMapMinValue = 0;
         private readonly Vector3 _origin;
         private readonly int[,] _gridArray;
         private readonly TextMesh[,] _debugTextArray;
@@ -17,8 +17,8 @@ namespace GridSystem {
         public event EventHandler<OnGridValueChangedEventArgs> OnGridValueChanged;
 
         public class OnGridValueChangedEventArgs : EventArgs {
-            public int x;
-            public int y;
+            public int X;
+            public int Y;
         }
 
         public int Width {
@@ -45,8 +45,8 @@ namespace GridSystem {
             _debugTextArray = new TextMesh[_width, _height];
             InitGrid();
             if (debugEnabled) {
-                OnGridValueChanged += (object sender, OnGridValueChangedEventArgs eventArgs) => {
-                    _debugTextArray[eventArgs.x, eventArgs.y].text = _gridArray[eventArgs.x, eventArgs.y].ToString();
+                OnGridValueChanged += (_, eventArgs) => {
+                    _debugTextArray[eventArgs.X, eventArgs.Y].text = _gridArray[eventArgs.X, eventArgs.Y].ToString();
                 };
             }
         }
@@ -169,12 +169,12 @@ namespace GridSystem {
         }
 
         private void TriggerGridValueChanged(int x, int y) {
-            OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs { x = x, y = y });
+            OnGridValueChanged?.Invoke(this, new OnGridValueChangedEventArgs { X = x, Y = y });
         }
 
-        private int ClampValue(int value) => Mathf.Clamp(value, HEAT_MAP_MIN_VALUE, HEAT_MAP_MAX_VALUE);
+        private int ClampValue(int value) => Mathf.Clamp(value, HeatMapMinValue, HeatMapMaxValue);
 
-        private float NormalizeValue(int value) => (float)value / HEAT_MAP_MAX_VALUE;
+        private float NormalizeValue(int value) => (float)value / HeatMapMaxValue;
 
         private bool IsValidPosition(int x, int y) => x >= 0 && y >= 0 && x < _width && y < _height;
 
