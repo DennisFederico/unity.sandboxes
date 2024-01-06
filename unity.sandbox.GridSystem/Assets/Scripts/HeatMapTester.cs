@@ -1,11 +1,11 @@
 using GridSystem;
 using UnityEngine;
 
+[RequireComponent(typeof(HeatMapVisual))]
 public class HeatMapTester : MonoBehaviour {
     [SerializeField] private int width;
     [SerializeField] private int height;
     [SerializeField] private float cellSize;
-    [SerializeField] private HeatMapVisual heatMapVisual;
     [SerializeField] private bool debugEnabled;
     
     private Camera _camera;
@@ -14,7 +14,7 @@ public class HeatMapTester : MonoBehaviour {
     private void Start() {
         _camera = Camera.main;
         _grid = new HeatMapGrid(transform.localPosition, width, height, cellSize, debugEnabled);
-        heatMapVisual.SetGrid(_grid);
+        GetComponent<HeatMapVisual>().SetGrid(_grid);
         if (debugEnabled) _grid.DebugGrid();
     }
     
