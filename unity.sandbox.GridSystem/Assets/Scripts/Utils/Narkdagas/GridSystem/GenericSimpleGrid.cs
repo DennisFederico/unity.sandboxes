@@ -13,10 +13,6 @@ namespace Utils.Narkdagas.GridSystem {
         private int _height;
         private float _cellSize;
 
-        // private readonly Action<TGridType, T> _setValueAction;
-        // private readonly Action<TGridType, T> _addValueAction;
-        // //private readonly Func<TGridType, T> _getValueFunc;
-
         public event EventHandler<OnGridValueChangedEventArgs> OnGridValueChanged;
 
         public int Width {
