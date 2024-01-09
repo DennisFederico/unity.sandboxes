@@ -1,30 +1,24 @@
 using System;
 using CodeMonkey.Utils;
+using Unity.Mathematics;
 using UnityEngine;
 
-namespace GridSystem {
-    
-    public interface IGridObject<in T> {
-        public void SetValue(T value);
-        public void AddValue(T addValue);
-        public float GetNormalizedValue();
-    }
-    
-    public class OnGridValueChangedEventArgs : EventArgs {
-        public int X;
-        public int Y;
-    }
-    
-    public class GenericGrid<TGridType, T> where TGridType : IGridObject<T> {
+namespace Utils.Narkdagas.GridSystem {
+
+    public class SimpleGenericGrid<TGridType, T> {
         private readonly Vector3 _origin;
         private readonly TGridType[,] _gridArray;
         private readonly TextMesh[,] _debugTextArray;
         private int _width;
         private int _height;
         private float _cellSize;
-        
+
+        private readonly Action<TGridType, T> _setValueAction;
+        private readonly Action<TGridType, T> _addValueAction;
+        //private readonly Func<TGridType, T> _getValueFunc;
+
         public event EventHandler<OnGridValueChangedEventArgs> OnGridValueChanged;
-        
+
         public int Width {
             get => _width;
             set => _width = value;
@@ -40,23 +34,29 @@ namespace GridSystem {
             set => _cellSize = value;
         }
 
-        public GenericGrid(Vector3 origin, int width, int height, float cellSize, Func<TGridType> createFunc, bool debugEnabled = false) {
+        public SimpleGenericGrid(Vector3 origin, int width, int height, float cellSize,
+            Func<int, int2, TGridType> createFunc,
+            Action<TGridType, T> setValueAction,
+            Action<TGridType, T> addValueAction,
+            bool debugEnabled = false) {
             _origin = origin;
             _width = width;
             _height = height;
             _cellSize = cellSize;
+            _setValueAction = setValueAction;
+            _addValueAction = addValueAction;
             _gridArray = new TGridType[_width, _height];
-            _debugTextArray = new TextMesh[_width, _height];
             InitGrid(createFunc);
             if (debugEnabled) {
+                _debugTextArray = new TextMesh[_width, _height];
                 OnGridValueChanged += (_, eventArgs) => { _debugTextArray[eventArgs.X, eventArgs.Y].text = _gridArray[eventArgs.X, eventArgs.Y]?.ToString(); };
             }
         }
 
-        private void InitGrid(Func<TGridType> createFunc) {
+        private void InitGrid(Func<int, int2, TGridType> createFunc) {
             for (int x = 0; x < _width; x++) {
                 for (int y = 0; y < _height; y++) {
-                    _gridArray[x, y] = createFunc();
+                    _gridArray[x, y] = createFunc(GetFlatIndex(x, y), new int2(x, y));
                 }
             }
         }
@@ -74,47 +74,63 @@ namespace GridSystem {
             return -1;
         }
 
-        public void SetGridObject(int x, int y, TGridType value) {
+        public void SetGridObject(int x, int y, TGridType gridObject) {
             if (!IsValidPosition(x, y)) return;
-            _gridArray[x, y] = value;
+            _gridArray[x, y] = gridObject;
             TriggerGridValueChanged(x, y);
         }
 
-        public void SetGridObject(Vector3 worldPosition, TGridType value) {
+        public void SetGridObject(Vector3 worldPosition, TGridType gridObject) {
             if (!TryGetXY(worldPosition, out var x, out var y)) return;
-            _gridArray[x, y] = value;
+            _gridArray[x, y] = gridObject;
             TriggerGridValueChanged(x, y);
         }
 
-        public bool TrySetGridObject(Vector3 worldPosition, TGridType value) {
-            if (TryGetXY(worldPosition, out var x, out var y)) {
-                _gridArray[x, y] = value;
-                TriggerGridValueChanged(x, y);
-                return true;
-            }
-
-            return false;
+        public bool TrySetGridObject(Vector3 worldPosition, TGridType gridObject) {
+            if (!TryGetXY(worldPosition, out var x, out var y)) return false;
+            _gridArray[x, y] = gridObject;
+            TriggerGridValueChanged(x, y);
+            return true;
         }
 
-        private void AddGridObject(int x, int y, T value) {
-            GetGridObject(x, y).AddValue(value);
+        public void SetGridValue(int x, int y, T value) {
+            if (!IsValidPosition(x, y)) return;
+            _setValueAction(_gridArray[x, y], value);
             TriggerGridValueChanged(x, y);
         }
 
-        public void AddGridObject(Vector3 worldPosition, T value) {
+        public void SetGridValue(Vector3 worldPosition, T value) {
             if (!TryGetXY(worldPosition, out var x, out var y)) return;
-            GetGridObject(x, y).AddValue(value);
+            _setValueAction(_gridArray[x, y], value);
             TriggerGridValueChanged(x, y);
         }
 
-        public void AddGridObject(Vector3 worldPosition, T value, int range) {
+        public bool TrySetGridValue(Vector3 worldPosition, T value) {
+            if (!TryGetXY(worldPosition, out var x, out var y)) return false;
+            _setValueAction(_gridArray[x, y], value);
+            TriggerGridValueChanged(x, y);
+            return true;
+        }
+
+        private void AddGridObjectValue(int x, int y, T value) {
+            _addValueAction(GetGridObject(x, y), value);
+            TriggerGridValueChanged(x, y);
+        }
+
+        public void AddGridObjectValue(Vector3 worldPosition, T value) {
+            if (!TryGetXY(worldPosition, out var x, out var y)) return;
+            _addValueAction(GetGridObject(x, y), value);
+            TriggerGridValueChanged(x, y);
+        }
+
+        public void AddGridObjectValue(Vector3 worldPosition, T value, int range) {
             if (!TryGetXY(worldPosition, out var x, out var y)) return;
             for (int xRange = 0; xRange < range; xRange++) {
                 for (int yRange = 0; yRange < range - xRange; yRange++) {
-                    AddGridObject(x + xRange, y + yRange, value);
-                    if (xRange != 0) AddGridObject(x - xRange, y + yRange, value);
-                    if (yRange != 0) AddGridObject(x + xRange, y - yRange, value);
-                    if (yRange != 0 && xRange != 0) AddGridObject(x - xRange, y - yRange, value);
+                    AddGridObjectValue(x + xRange, y + yRange, value);
+                    if (xRange != 0) AddGridObjectValue(x - xRange, y + yRange, value);
+                    if (yRange != 0) AddGridObjectValue(x + xRange, y - yRange, value);
+                    if (yRange != 0 && xRange != 0) AddGridObjectValue(x - xRange, y - yRange, value);
                 }
             }
         }
@@ -150,7 +166,7 @@ namespace GridSystem {
             return TryGetXY(worldPosition, out var x, out var y) ? _gridArray[x, y] : default;
         }
 
-        public bool TryGetValue(Vector3 worldPosition, out TGridType value) {
+        public bool TryGetGridObject(Vector3 worldPosition, out TGridType value) {
             if (TryGetXY(worldPosition, out var x, out var y)) {
                 value = _gridArray[x, y];
                 return true;
@@ -166,7 +182,7 @@ namespace GridSystem {
 
         private bool IsValidPosition(int x, int y) => x >= 0 && y >= 0 && x < _width && y < _height;
 
-        private bool TryGetXY(Vector3 worldPosition, out int x, out int y) {
+        public bool TryGetXY(Vector3 worldPosition, out int x, out int y) {
             x = Mathf.FloorToInt((worldPosition - _origin).x / _cellSize);
             y = Mathf.FloorToInt((worldPosition - _origin).y / _cellSize);
             return IsValidPosition(x, y);

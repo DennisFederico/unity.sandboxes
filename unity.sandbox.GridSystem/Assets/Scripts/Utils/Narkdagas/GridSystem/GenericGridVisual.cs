@@ -1,37 +1,34 @@
 using CodeMonkey.Utils;
 using UnityEngine;
 
-namespace GridSystem {
-    public class HeatMapVisual : MonoBehaviour {
+namespace Utils.Narkdagas.GridSystem {
 
-        private HeatMapGrid _grid;
-        private Mesh _mesh;
-        private Vector3 _quadSize;
+    public class GenericGridVisual<TGridType, T> where TGridType : IGridObject<T> {
+
+        private readonly GenericGrid<TGridType, T> _grid;
+        private readonly Mesh _mesh;
+        private readonly Vector3 _quadSize;
         private bool _updateVisual;
 
-        public void SetGrid(HeatMapGrid grid) {
+        public GenericGridVisual(GenericGrid<TGridType, T> grid, Mesh mesh) {
             _grid = grid;
+            _mesh = mesh;
             _quadSize = new Vector3(1, 1) * _grid.CellSize;
             _grid.OnGridValueChanged += GridOnValueChanged;
-            UpdateHeatMapVisual();
+            PaintVisual();
         }
 
-        private void GridOnValueChanged(object sender, HeatMapGrid.OnGridValueChangedEventArgs e) {
+        private void GridOnValueChanged(object sender, OnGridValueChangedEventArgs onGridValueChangedEventArgs) {
             _updateVisual = true;
         }
 
-        private void Awake() {
-            _mesh = new Mesh();
-            GetComponent<MeshFilter>().mesh = _mesh;
-        }
-
-        private void LateUpdate() {
+        public void LateUpdateVisual() {
             if (!_updateVisual) return;
             _updateVisual = false;
-            UpdateHeatMapVisual();
+            PaintVisual();
         }
 
-        private void UpdateHeatMapVisual() {
+        private void PaintVisual() {
             MeshUtils.CreateEmptyMeshArrays(
                 _grid.Width * _grid.Height,
                 out Vector3[] vertices,
@@ -42,12 +39,12 @@ namespace GridSystem {
             for (int x = 0; x < _grid.Width; x++) {
                 for (int y = 0; y < _grid.Height; y++) {
                     var index = _grid.GetFlatIndex(x, y);
-                    var normalizedValue = _grid.GetNormalizedValue(x, y);
+                    var normalizedValue = _grid.GetGridObject(x, y).GetNormalizedValue();
                     var uvValue = new Vector2(normalizedValue, 0f);
                     MeshUtils.AddToMeshArrays(vertices,
                         uvs,
                         triangles,
-                        index, 
+                        index,
                         _grid.GetWorldPosition(x, y) + _quadSize * 0.5f,
                         0,
                         _quadSize,

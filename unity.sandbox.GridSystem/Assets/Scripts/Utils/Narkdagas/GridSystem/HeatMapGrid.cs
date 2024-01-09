@@ -2,7 +2,7 @@ using System;
 using CodeMonkey.Utils;
 using UnityEngine;
 
-namespace GridSystem {
+namespace Utils.Narkdagas.GridSystem {
     public class HeatMapGrid {
         private const int HeatMapMaxValue = 100;
         private const int HeatMapMinValue = 0;
@@ -45,9 +45,7 @@ namespace GridSystem {
             _debugTextArray = new TextMesh[_width, _height];
             InitGrid();
             if (debugEnabled) {
-                OnGridValueChanged += (_, eventArgs) => {
-                    _debugTextArray[eventArgs.X, eventArgs.Y].text = _gridArray[eventArgs.X, eventArgs.Y].ToString();
-                };
+                OnGridValueChanged += (_, eventArgs) => { _debugTextArray[eventArgs.X, eventArgs.Y].text = _gridArray[eventArgs.X, eventArgs.Y].ToString(); };
             }
         }
 
@@ -115,7 +113,7 @@ namespace GridSystem {
                 }
             }
         }
-        
+
         public void AddFallOffValue(Vector3 worldPosition, int value, int range, int rangeAtMaxValue = 1) {
             int stepFallOffValue = value / (range - rangeAtMaxValue);
             if (TryGetXY(worldPosition, out var x, out var y)) {
@@ -123,7 +121,7 @@ namespace GridSystem {
                     for (int yRange = 0; yRange < range - xRange; yRange++) {
                         var currentRange = xRange + yRange;
                         var amountToAdd = currentRange > rangeAtMaxValue ? value - stepFallOffValue * (currentRange - rangeAtMaxValue) : value;
-                        
+
                         AddValue(x + xRange, y + yRange, amountToAdd);
                         if (xRange != 0) AddValue(x - xRange, y + yRange, amountToAdd);
                         if (yRange != 0) AddValue(x + xRange, y - yRange, amountToAdd);
@@ -132,7 +130,7 @@ namespace GridSystem {
                 }
             }
         }
-        
+
 
         public int GetValue(int x, int y) {
             if (IsValidPosition(x, y)) {
