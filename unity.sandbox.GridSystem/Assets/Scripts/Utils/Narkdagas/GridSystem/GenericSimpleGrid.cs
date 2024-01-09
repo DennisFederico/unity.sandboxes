@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Utils.Narkdagas.GridSystem {
     
-    public class GenericSimpleGrid<TGridType> {
+    public class GenericSimpleGrid<TGridType> where TGridType : struct {
         private readonly Vector3 _origin;
         private readonly TGridType[,] _gridArray;
         private readonly TextMesh[,] _debugTextArray;
@@ -191,7 +191,7 @@ namespace Utils.Narkdagas.GridSystem {
 
             for (int x = 0; x < _gridArray.GetLength(0); x++) {
                 for (int y = 0; y < _gridArray.GetLength(1); y++) {
-                    _debugTextArray[x, y] = UtilsClass.CreateWorldText(_gridArray[x, y]?.ToString(), null,
+                    _debugTextArray[x, y] = UtilsClass.CreateWorldText(_gridArray[x, y].ToString(), null,
                         GetWorldPosition(x, y) + new Vector3(_cellSize, _cellSize) * 0.5f, 20, Color.white,
                         TextAnchor.MiddleCenter, TextAlignment.Center);
                     Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x, y + 1), Color.white, 100f);

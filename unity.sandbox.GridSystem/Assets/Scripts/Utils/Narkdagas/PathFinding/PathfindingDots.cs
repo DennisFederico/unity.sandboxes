@@ -5,7 +5,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Utils.Narkdagas {
+namespace Utils.Narkdagas.PathFinding {
     public class PathfindingDots : MonoBehaviour {
         private const int DiagonalCost = 14;
         private const int StraightCost = 10;

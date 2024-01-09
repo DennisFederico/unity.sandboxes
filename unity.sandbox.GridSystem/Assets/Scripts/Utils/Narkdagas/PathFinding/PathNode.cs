@@ -1,6 +1,9 @@
+using Unity.Burst;
 using Unity.Mathematics;
 
 namespace Utils.Narkdagas.PathFinding {
+
+    [BurstCompile]
     public struct PathNode : IPathNode {
         public int Index { get; set; }
         public int2 GridPosition { get; set; }
@@ -10,12 +13,17 @@ namespace Utils.Narkdagas.PathFinding {
         public int FCost => GCost + HCost;
         public int ParentIndex { get; set; }
         
+        public void ResetCosts(int hCost)  {
+            GCost = int.MaxValue;
+            HCost = hCost;
+        }
+        
         public override string ToString() {
             // return $"{Index} [{GridPosition.x}, {GridPosition.y}]\n[{GCost},{HCost},{FCost}]";
             return $"{Index} [{GridPosition.x}, {GridPosition.y}]";
         }
     }
-
+    
     public interface IPathNode {
         int Index { get; set; }
         int2 GridPosition { get; set; }
@@ -24,10 +32,6 @@ namespace Utils.Narkdagas.PathFinding {
         int HCost { get; set; }
         int FCost { get; }
         int ParentIndex { get; set; }
-        
-        void ResetCosts(int hCost)  {
-            GCost = int.MaxValue;
-            HCost = hCost;
-        }
+        void ResetCosts(int hCost);
     }
 }

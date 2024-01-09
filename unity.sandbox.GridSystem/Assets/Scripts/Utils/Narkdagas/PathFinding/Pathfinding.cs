@@ -5,12 +5,11 @@ using Utils.Narkdagas.GridSystem;
 using int2 = Unity.Mathematics.int2;
 
 namespace Utils.Narkdagas.PathFinding {
-    //TODO BURST COMPILE THIS
-    public class Pathfinding {
+    public class Pathfinding<TPathNode> where TPathNode : struct, IPathNode {
         private const int DiagonalCost = 14;
         private const int StraightCost = 10;
 
-        public bool TryFindPath(int2 fromPosition, int2 toPosition, int2 gridSize, GenericSimpleGrid<IPathNode> grid, out int2[] path) {
+        public bool TryFindPath(int2 fromPosition, int2 toPosition, int2 gridSize, GenericSimpleGrid<TPathNode> grid, out int2[] path) {
             int2[] result = null;
             //Initialize the PathNodes
             for (var x = 0; x < gridSize.x; x++) {
@@ -134,7 +133,7 @@ namespace Utils.Narkdagas.PathFinding {
         private static bool IsPositionInsideGrid(int2 gridPosition, int2 gridSize) =>
             gridPosition is { x: >= 0, y: >= 0 } && gridPosition.x < gridSize.x && gridPosition.y < gridSize.y;
 
-        private bool TryGetNodeIndexWithLowestFCost(NativeList<int> openList, GenericSimpleGrid<IPathNode> grid, int2 gridSize, out int openListIndex) {
+        private bool TryGetNodeIndexWithLowestFCost(NativeList<int> openList, GenericSimpleGrid<TPathNode> grid, int2 gridSize, out int openListIndex) {
             var lowestCost = int.MaxValue;
             var lowestCostIndex = -1;
             for (var i = 0; i < openList.Length; i++) {
@@ -150,7 +149,7 @@ namespace Utils.Narkdagas.PathFinding {
             return openListIndex >= 0;
         }
 
-        private NativeList<int2> BacktrackPathFromEndNode(int2 endPosition, GenericSimpleGrid<IPathNode> grid, int2 gridSize) {
+        private NativeList<int2> BacktrackPathFromEndNode(int2 endPosition, GenericSimpleGrid<TPathNode> grid, int2 gridSize) {
             var path = new NativeList<int2>(Allocator.Temp);
 
             var nextNodeIndex = PathNodeIndex(endPosition, gridSize);

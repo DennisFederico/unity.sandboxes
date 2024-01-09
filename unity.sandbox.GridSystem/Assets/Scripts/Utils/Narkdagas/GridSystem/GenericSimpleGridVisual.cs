@@ -4,20 +4,20 @@ using UnityEngine;
 
 namespace Utils.Narkdagas.GridSystem {
 
-    public class GenericSimpleGridVisual<TGridType> {
+    public class GenericSimpleGridVisual<TGridType> where TGridType : struct {
 
-        protected GenericSimpleGrid<TGridType> Grid;
-        protected Mesh Mesh;
-        protected Vector3 QuadSize;
-        protected Func<TGridType, float> NormalizeFunc;
+        private GenericSimpleGrid<TGridType> _grid;
+        private Mesh _mesh;
+        private Vector3 _quadSize;
+        private Func<TGridType, float> _normalizeFunc;
         private bool _updateVisual;
 
         public GenericSimpleGridVisual(GenericSimpleGrid<TGridType> grid, Mesh mesh, Func<TGridType, float> normalizeFunc) {
-            Grid = grid;
-            Mesh = mesh;
-            QuadSize = new Vector3(1, 1) * Grid.CellSize;
-            NormalizeFunc = normalizeFunc;
-            Grid.OnGridValueChanged += GridOnValueChanged;
+            _grid = grid;
+            _mesh = mesh;
+            _quadSize = new Vector3(1, 1) * _grid.CellSize;
+            _normalizeFunc = normalizeFunc;
+            _grid.OnGridValueChanged += GridOnValueChanged;
             PaintVisual();
         }
 
@@ -32,37 +32,34 @@ namespace Utils.Narkdagas.GridSystem {
         }
 
         protected void PaintVisual() {
-            
-            Debug.Log($"Repaint!!");
-            
             MeshUtils.CreateEmptyMeshArrays(
-                Grid.Width * Grid.Height,
+                _grid.Width * _grid.Height,
                 out Vector3[] vertices,
                 out Vector2[] uvs,
                 out int[] triangles
             );
 
-            for (int x = 0; x < Grid.Width; x++) {
-                for (int y = 0; y < Grid.Height; y++) {
-                    var index = Grid.GetFlatIndex(x, y);
-                    var normalizedValue = NormalizeFunc(Grid.GetGridObject(x, y));
+            for (int x = 0; x < _grid.Width; x++) {
+                for (int y = 0; y < _grid.Height; y++) {
+                    var index = _grid.GetFlatIndex(x, y);
+                    var normalizedValue = _normalizeFunc(_grid.GetGridObject(x, y));
                     var uvValue = new Vector2(normalizedValue, 0f);
                     MeshUtils.AddToMeshArrays(vertices,
                         uvs,
                         triangles,
                         index,
-                        Grid.GetWorldPosition(x, y) + QuadSize * 0.5f,
+                        _grid.GetWorldPosition(x, y) + _quadSize * 0.5f,
                         0,
-                        QuadSize,
+                        _quadSize,
                         uvValue,
                         uvValue
                     );
                 }
             }
 
-            Mesh.vertices = vertices;
-            Mesh.triangles = triangles;
-            Mesh.uv = uvs;
+            _mesh.vertices = vertices;
+            _mesh.triangles = triangles;
+            _mesh.uv = uvs;
         }
     }
 }

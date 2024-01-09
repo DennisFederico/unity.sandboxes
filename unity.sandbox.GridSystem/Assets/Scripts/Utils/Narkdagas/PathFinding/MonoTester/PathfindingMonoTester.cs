@@ -13,8 +13,8 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
 
         private Camera _camera;
         private Mesh _mesh;
-        private GenericSimpleGrid<IPathNode> _grid;
-        private GenericSimpleGridVisual<IPathNode> _gridVisual;
+        private GenericSimpleGrid<PathNode> _grid;
+        private GenericSimpleGridVisual<PathNode> _gridVisual;
 
         private void Start() {
             _camera = Camera.main;
@@ -22,14 +22,14 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
             GetComponent<MeshRenderer>().material = gradientMaterial;
             GetComponent<MeshFilter>().mesh = _mesh;
             
-            _grid = new GenericSimpleGrid<IPathNode> (transform.position, width, height, cellSize,
+            _grid = new GenericSimpleGrid<PathNode> (transform.position, width, height, cellSize,
                 (index, gridPos) => new PathNode {
                     Index = index,
                     GridPosition = gridPos,
                     IsWalkable = true
                 },
                 true);
-            _gridVisual = new GenericSimpleGridVisual<IPathNode>(_grid, _mesh, (node) => {
+            _gridVisual = new GenericSimpleGridVisual<PathNode>(_grid, _mesh, (node) => {
                 if (!node.IsWalkable) return 0f;
                 if (node.ParentIndex != -1) return .5f;
                 return 0.25f;
@@ -42,7 +42,7 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
             if (Input.GetMouseButtonDown(0)) {
                 if (_grid.TryGetXY(_camera.ScreenToWorldPoint(Input.mousePosition), out var x, out var y)) {
                     Debug.Log("Mouse position: " + x + ", " + y);
-                    new Pathfinding().TryFindPath(int2.zero, new int2(x, y), new int2(width, height), _grid, out var path);
+                    new Pathfinding<PathNode>().TryFindPath(int2.zero, new int2(x, y), new int2(width, height), _grid, out var path);
                     DebugPath(path);
                     Debug.Log($"Path: {string.Join(", ", path)}");
                 }
