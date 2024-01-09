@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Utils.Narkdagas.GridSystem {
+namespace Utils.Narkdagas.GridSystem.MonoTester {
     public class GenericGridHeatMapMonoTester : MonoBehaviour {
 
         [SerializeField] private int width;

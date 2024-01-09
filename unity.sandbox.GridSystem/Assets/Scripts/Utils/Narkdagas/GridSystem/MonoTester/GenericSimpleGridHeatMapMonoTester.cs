@@ -1,7 +1,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Utils.Narkdagas.GridSystem {
+namespace Utils.Narkdagas.GridSystem.MonoTester {
     public class GenericSimpleGridHeatMapMonoTester : MonoBehaviour {
 
         [SerializeField] private int width;

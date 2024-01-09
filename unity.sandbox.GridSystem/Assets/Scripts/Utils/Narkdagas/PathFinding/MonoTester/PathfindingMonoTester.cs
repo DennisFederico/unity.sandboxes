@@ -1,9 +1,8 @@
-using System;
 using Unity.Mathematics;
 using UnityEngine;
 using Utils.Narkdagas.GridSystem;
 
-namespace Utils.Narkdagas.PathFinding {
+namespace Utils.Narkdagas.PathFinding.MonoTester {
     public class PathfindingMonoTester : MonoBehaviour {
 
         [SerializeField] private int width;
