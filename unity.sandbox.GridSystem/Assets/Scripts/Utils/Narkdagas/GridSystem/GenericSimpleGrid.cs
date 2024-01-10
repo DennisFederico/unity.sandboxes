@@ -1,5 +1,6 @@
 using System;
 using CodeMonkey.Utils;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -43,10 +44,10 @@ namespace Utils.Narkdagas.GridSystem {
             // _addValueAction = addValueAction;
             _gridArray = new TGridType[_width, _height];
             InitGrid(createFunc);
-            if (debugEnabled) {
-                _debugTextArray = new TextMesh[_width, _height];
-                OnGridValueChanged += (_, eventArgs) => { _debugTextArray[eventArgs.X, eventArgs.Y].text = _gridArray[eventArgs.X, eventArgs.Y].ToString(); };
-            }
+            // if (debugEnabled) {
+            //     _debugTextArray = new TextMesh[_width, _height];
+            //     OnGridValueChanged += (_, eventArgs) => { _debugTextArray[eventArgs.X, eventArgs.Y].text = _gridArray[eventArgs.X, eventArgs.Y].ToString(); };
+            // }
         }
 
         private void InitGrid(Func<int, int2, TGridType> createFunc) {
@@ -183,12 +184,43 @@ namespace Utils.Narkdagas.GridSystem {
             y = Mathf.FloorToInt((worldPosition - _origin).y / _cellSize);
             return IsValidPosition(x, y);
         }
+        
+        public bool TryGetXY(Vector3 worldPosition, out int2 coords) {
+            var x = Mathf.FloorToInt((worldPosition - _origin).x / _cellSize);
+            var y = Mathf.FloorToInt((worldPosition - _origin).y / _cellSize);
+            coords = new int2(x, y);
+            return IsValidPosition(x, y);
+        }
+        
+        public NativeArray<TGridType> GetGridAsArray () {
+            var array = new NativeArray<TGridType>(_width * _height, Allocator.Temp);
+            for (int x = 0; x < _width; x++) {
+                for (int y = 0; y < _height; y++) {
+                    array[GetFlatIndex(x, y)] = _gridArray[x, y];
+                }
+            }
+            return array;
+        }
 
+        public void PaintDebugGrid() {
+            if (_gridArray == null) {
+                return;
+            }
+            for (int x = 0; x < _gridArray.GetLength(0); x++) {
+                for (int y = 0; y < _gridArray.GetLength(1); y++) {
+                    Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x, y + 1), Color.black, 100f);
+                    Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x + 1, y), Color.black, 100f);
+                }
+            }
+            Debug.DrawLine(GetWorldPosition(0, _height), GetWorldPosition(_width, _height), Color.black, 100f);
+            Debug.DrawLine(GetWorldPosition(_width, 0), GetWorldPosition(_width, _height), Color.black, 100f);
+        }
+        
         public void DebugGrid() {
             if (_gridArray == null) {
                 return;
             }
-
+        
             for (int x = 0; x < _gridArray.GetLength(0); x++) {
                 for (int y = 0; y < _gridArray.GetLength(1); y++) {
                     _debugTextArray[x, y] = UtilsClass.CreateWorldText(_gridArray[x, y].ToString(), null,
@@ -198,7 +230,7 @@ namespace Utils.Narkdagas.GridSystem {
                     Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x + 1, y), Color.white, 100f);
                 }
             }
-
+        
             Debug.DrawLine(GetWorldPosition(0, _height), GetWorldPosition(_width, _height), Color.white, 100f);
             Debug.DrawLine(GetWorldPosition(_width, 0), GetWorldPosition(_width, _height), Color.white, 100f);
         }
