@@ -43,15 +43,12 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
         private void Update() {
             if (Input.GetMouseButtonDown(0)) {
                 _startDragPosition = _camera.ScreenToWorldPoint(Input.mousePosition);
-                Debug.Log($"Down - {_startDragPosition}");
             }
             
             if (Input.GetMouseButtonUp(0)) {
                 var endDragPosition = _camera.ScreenToWorldPoint(Input.mousePosition);
-                Debug.Log($"Up - {endDragPosition}");
                 
                 if (_grid.TryGetXY(_startDragPosition, out var startPos) && _grid.TryGetXY(endDragPosition, out var endPos)) {
-                    Debug.Log($"Path from {startPos} to {endPos}");
                     
                     if (math.distance(startPos, endPos) < 1) {
                         startPos = int2.zero;
@@ -61,14 +58,12 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
                         var path3 = TransformPath(path, cellSize);
                         player.SetPath(path3);
                         DebugPath(path);
-                        Debug.Log($"Found Path: {string.Join(", ", path)}");
                     }
                 }
             }
             
             if (Input.GetMouseButtonDown(1)) {
                 if (!_grid.TryGetXY(_camera.ScreenToWorldPoint(Input.mousePosition), out var x, out var y)) return;
-                Debug.Log("Mouse position: " + x + ", " + y);
                 var node = _grid.GetGridObject(x, y);
                 node.IsWalkable = !node.IsWalkable;
                 _grid.SetGridObject(x, y, node);
@@ -78,8 +73,8 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
         private Vector3[] TransformPath(int2[] path, float gridCellSize) {
             var path3 = new Vector3[path.Length];
             int index = 0;
-            for (int i=path.Length-1; i>=0; i--) {
-                path3[index++] = _grid.GetWorldPosition(path[i].x , path[i].y) + new Vector3(gridCellSize/2, gridCellSize/2, 0);
+            foreach (var step in path) {
+                path3[index++] = _grid.GetWorldPosition(step.x , step.y) + new Vector3(gridCellSize/2, gridCellSize/2, 0);
             }
             return path3;
         }

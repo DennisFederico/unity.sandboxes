@@ -7,7 +7,7 @@ namespace Utils.Narkdagas.PathFinding {
     public class PathfindingNative {
         private const int DiagonalCost = 14;
         private const int StraightCost = 10;
-        
+
         public static NativeArray<PathNode> NewGridArray(int2 gridSize) {
             var gridArray = new NativeArray<PathNode>(gridSize.x * gridSize.y, Allocator.Temp);
             //Initialize the PathNodes
@@ -25,11 +25,12 @@ namespace Utils.Narkdagas.PathFinding {
                     gridArray[pathNode.Index] = pathNode;
                 }
             }
+
             return gridArray;
         }
-        
-        public bool TryFindPath(int2 fromPosition, int2 toPosition, int2 gridSize, NativeArray<PathNode> gridArray, out int2[] path) {
-            int2[] result = null;
+
+        public bool TryFindPath(int2 fromPosition, int2 toPosition, int2 gridSize, NativeArray<PathNode> gridArray, out NativeArray<int2> path) {
+            path = new NativeArray<int2>();
             //Create a Native (thread-safe) "Flat" Array of PathNodes
             //var gridArray = new NativeArray<PathNode>(gridSize.x * gridSize.y, Allocator.Temp);
 
@@ -123,21 +124,13 @@ namespace Utils.Narkdagas.PathFinding {
                 Debug.Log("No Path");
             }
             else {
-                //There is a path
-                var backtrackPath = BacktrackPathFromEndNode(PathNodeIndex(toPosition, gridSize), gridArray);
-                //var nativeArray = backtrackPath.ToArray(Allocator.Temp);
-                result = backtrackPath.ToArray();
-                //nativeArray.Dispose();
-                backtrackPath.Dispose();
+                path = BacktrackPathFromEndNode(PathNodeIndex(toPosition, gridSize), gridArray);
             }
 
-            gridArray.Dispose();
             offsets.Dispose();
             openList.Dispose();
             closedList.Dispose();
-
-            path = result;
-            return path != null;
+            return path.IsCreated;
         }
 
         private static int PathNodeIndex(int2 gridPosition, int2 gridSize) => gridPosition.x + (gridPosition.y * gridSize.x);
@@ -156,7 +149,7 @@ namespace Utils.Narkdagas.PathFinding {
 
         private static bool IsPositionInsideGrid(int2 gridPosition, int2 gridSize) =>
             gridPosition is { x: >= 0, y: >= 0 } && gridPosition.x < gridSize.x && gridPosition.y < gridSize.y;
-        
+
         private bool TryGetNodeIndexWithLowestFCost(NativeList<int> openList, NativeArray<PathNode> pathNodes, out int openListIndex) {
             var lowestCost = int.MaxValue;
             var lowestCostIndex = -1;
@@ -171,17 +164,24 @@ namespace Utils.Narkdagas.PathFinding {
             openListIndex = lowestCostIndex;
             return openListIndex >= 0;
         }
-        
-        private NativeList<int2> BacktrackPathFromEndNode(int endNodeIndex, NativeArray<PathNode> pathNodes) {
-            var path = new NativeList<int2>(Allocator.Temp);
-            var currentNodeIndex = endNodeIndex;
-            while (currentNodeIndex != -1) {
-                var currentNode = pathNodes[currentNodeIndex];
-                path.Add(currentNode.GridPosition);
-                currentNodeIndex = currentNode.ParentIndex;
-            }
 
-            return path;
+        private NativeArray<int2> BacktrackPathFromEndNode(int endNodeIndex, NativeArray<PathNode> pathNodes) {
+            var path = new NativeList<int2>(Allocator.Temp);
+            var nextNodeIndex = endNodeIndex;
+            
+            while (nextNodeIndex != -1) {
+                var currentNode = pathNodes[nextNodeIndex];
+                path.Add(currentNode.GridPosition);
+                nextNodeIndex = currentNode.ParentIndex;
+            }
+            
+            var result = new NativeArray<int2>(path.Length, Allocator.Persistent);
+            int reverseIndex = 0;
+            for (int index = path.Length - 1; index >= 0; index--) {
+                result[reverseIndex++] = path[index];
+            }
+            path.Dispose();
+            return result;
         }
     }
 }

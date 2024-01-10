@@ -149,18 +149,25 @@ namespace Utils.Narkdagas.PathFinding {
             return openListIndex >= 0;
         }
 
-        private NativeList<int2> BacktrackPathFromEndNode(int2 endPosition, GenericSimpleGrid<TPathNode> grid, int2 gridSize) {
+        private NativeArray<int2> BacktrackPathFromEndNode(int2 endPosition, GenericSimpleGrid<TPathNode> grid, int2 gridSize) {
             var path = new NativeList<int2>(Allocator.Temp);
-
             var nextNodeIndex = PathNodeIndex(endPosition, gridSize);
+            
             while (nextNodeIndex != -1) {
                 var gridPos = PathNodeGridPosition(nextNodeIndex, gridSize);
                 var currentNode = grid.GetGridObject(gridPos.x, gridPos.y);
                 path.Add(currentNode.GridPosition);
                 nextNodeIndex = currentNode.ParentIndex;
             }
+            
+            var result = new NativeArray<int2>(path.Length, Allocator.Persistent);
+            int reverseIndex = 0;
+            for (int index = path.Length - 1; index >= 0; index--) {
+                result[reverseIndex++] = path[index];
+            }
 
-            return path;
+            path.Dispose();
+            return result;
         }
     }
 }
