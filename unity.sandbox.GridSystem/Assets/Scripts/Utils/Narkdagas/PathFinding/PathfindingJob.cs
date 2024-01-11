@@ -31,6 +31,7 @@ namespace Utils.Narkdagas.PathFinding {
         }
 
         private void FindPath(in int2 fromPosition, in int2 toPosition, in int2 gridSize) {
+            if ((fromPosition == toPosition) is { x: true, y: true }) return;
             var localGrid = InitLocalGrid(GridArray, GridSize, toPosition, Allocator.Temp);
             
             //Initialize the algorithm
@@ -103,13 +104,8 @@ namespace Utils.Narkdagas.PathFinding {
                 }
             }
             
-            //We have either found the path or there is no path
-            if (localGrid[PathNodeIndex(toPosition, gridSize)].ParentIndex == -1) {
-                //There is no path
-                Debug.Log("No Path found");
-            }
-            else {
-                //There is a path
+            //Do we have a path?
+            if (localGrid[PathNodeIndex(toPosition, gridSize)].ParentIndex != -1) {
                 BacktrackPathFromEndNode(PathNodeIndex(toPosition, gridSize), localGrid, ResultPath);
             }
             
@@ -152,7 +148,7 @@ namespace Utils.Narkdagas.PathFinding {
             return openListIndex >= 0;
         }
 
-        private static bool BacktrackPathFromEndNode(int endNodeIndex, NativeArray<PathNode> pathNodes, NativeList<int2> resultPath) {
+        private static void BacktrackPathFromEndNode(int endNodeIndex, NativeArray<PathNode> pathNodes, NativeList<int2> resultPath) {
             var path = new NativeList<int2>(Allocator.Temp);
             var nextNodeIndex = endNodeIndex;
         
@@ -169,7 +165,7 @@ namespace Utils.Narkdagas.PathFinding {
             }
         
             path.Dispose();
-            return !resultPath.IsEmpty;
+            // return !resultPath.IsEmpty;
         }
 
         private static NativeArray<PathNode> InitLocalGrid(in NativeArray<PathNode> walkableFlags, in int2 gridSize, int2 toPosition, in Allocator allocator) {
