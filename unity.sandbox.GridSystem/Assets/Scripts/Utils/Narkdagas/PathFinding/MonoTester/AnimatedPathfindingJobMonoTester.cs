@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -28,7 +29,7 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
         private GenericSimpleGrid<PathNode> _grid;
         private GenericSimpleGridVisual<PathNode> _gridVisual;
         private PathfindingMovement _player;
-        private PathfindingMovement[] _army;
+        private List<PathfindingMovement> _army;
         private Random _random;
 
         private void OnEnable() {
@@ -63,7 +64,6 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
                 resultPath.Dispose();
                 gridAsArray.Dispose();
             }
-            
         }
 
 
@@ -73,7 +73,7 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
             GetComponent<MeshRenderer>().material = gradientMaterial;
             GetComponent<MeshFilter>().mesh = _mesh;
             _random = Random.CreateFromIndex((uint)UnityEngine.Random.Range(0, int.MaxValue));
-
+            _army = new List<PathfindingMovement>();
 
             _grid = new GenericSimpleGrid<PathNode>(transform.position, width, height, cellSize,
                 (index, gridPos) => new PathNode {
@@ -172,17 +172,17 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
                 _grid.SetGridObject(x, y, node);
             }
 
-            if (Input.GetKeyDown(KeyCode.A) && _army == null) {
+            if (Input.GetKeyDown(KeyCode.A)) {
                 var startTime = Time.realtimeSinceStartup;
                 Debug.Log($"Building an army of {armySize} jobs at {startTime}");
-
-                _army = new PathfindingMovement[armySize];
+            
+                var platoon = new PathfindingMovement[armySize];
                 var gridAsArray = _grid.GetGridAsArray(Allocator.TempJob);
                 var results = new NativeArray<NativeList<int2>>(armySize, Allocator.TempJob);
                 var handlers = new NativeArray<JobHandle>(armySize, Allocator.TempJob);
                 var random = Random.CreateFromIndex((uint)Time.frameCount);
                 for (int i = 0; i < armySize; i++) {
-                    _army[i] = Instantiate(prefab);
+                    platoon[i] = Instantiate(prefab);
                     results[i] = new NativeList<int2>(armySize, Allocator.TempJob);
                     var startPos = random.NextInt2(new int2(0, 0), new int2(width - 1, height - 1));
                     var endPos = random.NextInt2(new int2(0, 0), new int2(width - 1, height - 1));
@@ -200,12 +200,14 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
                 for (int i = 0; i < armySize; i++) {
                     var path3 = TransformPath(results[i], cellSize);
                     results[i].Dispose();
-                    _army[i].SetPath(path3, this.NewGridPathRequestEvent);
+                    platoon[i].SetPath(path3, this.NewGridPathRequestEvent);
                 }
-
+                
                 results.Dispose();
                 handlers.Dispose();
                 gridAsArray.Dispose();
+                _army.AddRange(platoon);
+                
                 var endTime = Time.realtimeSinceStartup;
                 Debug.Log($"Added {armySize} to the army at {endTime} in {endTime - startTime}s");
             }

@@ -497,7 +497,7 @@ MonoBehaviour:
   debugEnabled: 0
   gradientMaterial: {fileID: 2100000, guid: 7e8b3285923dd4b5ba94a684317c5a75, type: 2}
   prefab: {fileID: 4094584422462657972, guid: 4669e746ccd0b4226af5707b723d5255, type: 3}
-  armySize: 5000
+  armySize: 500
 --- !u!23 &1936856731
 MeshRenderer:
   m_ObjectHideFlags: 0
