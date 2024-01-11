@@ -1,33 +1,38 @@
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Utils.Narkdagas.PathFinding {
-    
+
     [BurstCompile]
-    public class PathfindingNative {
+    public struct PathfindingJob : IJob {
+
         private const int DiagonalCost = 14;
         private const int StraightCost = 10;
-        
-        public bool TryFindPath(int2 fromPosition, int2 toPosition, int2 gridSize, NativeArray<PathNode> gridArray, out NativeArray<int2> path) {
-            path = new NativeArray<int2>();
-            //Create a Native (thread-safe) "Flat" Array of PathNodes
-            //var gridArray = new NativeArray<PathNode>(gridSize.x * gridSize.y, Allocator.Temp);
 
-            //Initialize the PathNodes
-            for (var x = 0; x < gridSize.x; x++) {
-                for (var y = 0; y < gridSize.y; y++) {
-                    var gridPosition = new int2(x, y);
-                    var pathNodeIndex = PathNodeIndex(gridPosition, gridSize);
-                    var pathNode = gridArray[pathNodeIndex];
-                    pathNode.GCost = int.MaxValue;
-                    pathNode.HCost = DistanceCost(gridPosition, toPosition);
-                    pathNode.ParentIndex = -1;
-                    gridArray[pathNode.Index] = pathNode;
-                }
-            }
+        //TODO. Try making this a readonly field, as it could be shared between multiple jobs
+        //TODO. The type of this array can be different, with less fields, as we only need the GridPosition and IsWalkable
+        [ReadOnly]
+        public NativeArray<PathNode> GridArray;
+        [ReadOnly]
+        public int2 GridSize;
+        [ReadOnly]
+        public int2 FromPosition;
+        [ReadOnly]
+        public int2 ToPosition;
+        [NativeDisableContainerSafetyRestriction]
+        public NativeList<int2> ResultPath;
 
+        public void Execute() {
+            FindPath(FromPosition, ToPosition, GridSize);
+        }
+
+        private void FindPath(in int2 fromPosition, in int2 toPosition, in int2 gridSize) {
+            var localGrid = InitLocalGrid(GridArray, GridSize, toPosition, Allocator.Temp);
+            
             //Initialize the algorithm
             var offsets = new NativeArray<int2>(8, Allocator.Temp);
             offsets[0] = new int2(-1, 1); //Top Left
@@ -38,32 +43,32 @@ namespace Utils.Narkdagas.PathFinding {
             offsets[5] = new int2(0, -1); //Bottom
             offsets[6] = new int2(-1, -1); //Bottom Left
             offsets[7] = new int2(-1, 0); //Left
-
+            
             var openList = new NativeList<int>(Allocator.Temp);
             var closedList = new NativeList<int>(Allocator.Temp);
-
+            
             var startNodeIndex = PathNodeIndex(fromPosition, gridSize);
-            var startNode = gridArray[startNodeIndex];
+            var startNode = localGrid[startNodeIndex];
             startNode.GCost = 0;
-            gridArray[startNodeIndex] = startNode;
-
+            localGrid[startNodeIndex] = startNode;
+            
             openList.Add(startNodeIndex);
-
+            
             while (openList.Length > 0) {
-                if (!TryGetNodeIndexWithLowestFCost(openList, gridArray, out var openListIndex)) continue;
+                if (!TryGetNodeIndexWithLowestFCost(openList, localGrid, out var openListIndex)) continue;
                 var currentNodeIndex = openList[openListIndex];
-                var currentNode = gridArray[currentNodeIndex];
+                var currentNode = localGrid[currentNodeIndex];
                 if (currentNode.XY.Equals(toPosition)) {
                     //We found the path
                     break;
                 }
-
+            
                 //Remove the current node from the open list
                 openList.RemoveAtSwapBack(openListIndex);
-
+            
                 //Add the current node to the closed list
                 closedList.Add(currentNodeIndex);
-
+            
                 //Loop through the neighbors of the current node
                 foreach (var offset in offsets) {
                     var neighborGridPosition = currentNode.XY + offset;
@@ -71,25 +76,25 @@ namespace Utils.Narkdagas.PathFinding {
                         //This neighbor is outside the grid
                         continue;
                     }
-
+            
                     var neighborNodeIndex = PathNodeIndex(neighborGridPosition, gridSize);
                     if (closedList.Contains(neighborNodeIndex)) {
                         //This neighbor is already in the closed list
                         continue;
                     }
-
-                    var neighborNode = gridArray[neighborNodeIndex];
+            
+                    var neighborNode = localGrid[neighborNodeIndex];
                     if (!neighborNode.IsWalkable) {
                         //This neighbor is not walkable
                         continue;
                     }
-
+            
                     var tentativeGCost = currentNode.GCost + DistanceCost(currentNode.XY, neighborNode.XY);
                     if (tentativeGCost < neighborNode.GCost) {
                         //This is a better path to the neighbor
                         neighborNode.GCost = tentativeGCost;
                         neighborNode.ParentIndex = currentNodeIndex;
-                        gridArray[neighborNodeIndex] = neighborNode;
+                        localGrid[neighborNodeIndex] = neighborNode;
                         if (!openList.Contains(neighborNodeIndex)) {
                             //Add the neighbor to the open list
                             openList.Add(neighborNodeIndex);
@@ -97,25 +102,27 @@ namespace Utils.Narkdagas.PathFinding {
                     }
                 }
             }
-
+            
             //We have either found the path or there is no path
-            if (gridArray[PathNodeIndex(toPosition, gridSize)].ParentIndex == -1) {
+            if (localGrid[PathNodeIndex(toPosition, gridSize)].ParentIndex == -1) {
                 //There is no path
-                Debug.Log("No Path");
+                Debug.Log("No Path found");
             }
             else {
-                path = BacktrackPathFromEndNode(PathNodeIndex(toPosition, gridSize), gridArray);
+                //There is a path
+                BacktrackPathFromEndNode(PathNodeIndex(toPosition, gridSize), localGrid, ResultPath);
             }
-
+            
             offsets.Dispose();
             openList.Dispose();
             closedList.Dispose();
-            return path.IsCreated;
+            localGrid.Dispose();
         }
 
-        private static int PathNodeIndex(int2 gridPosition, int2 gridSize) => gridPosition.x + (gridPosition.y * gridSize.x);
+        //Flattens the index of a 2D array into a 1D array
+        private static int PathNodeIndex(in int2 gridPosition, in int2 gridSize) => gridPosition.x + (gridPosition.y * gridSize.x);
 
-        private static int DistanceCost(int2 a, int2 b) {
+        private static int DistanceCost(in int2 a, in int2 b) {
             var xDistance = math.abs(a.x - b.x);
             var yDistance = math.abs(a.y - b.y);
 
@@ -127,10 +134,10 @@ namespace Utils.Narkdagas.PathFinding {
             return DiagonalCost * diagonally + StraightCost * straight;
         }
 
-        private static bool IsPositionInsideGrid(int2 gridPosition, int2 gridSize) =>
+        private static bool IsPositionInsideGrid(in int2 gridPosition, in int2 gridSize) =>
             gridPosition is { x: >= 0, y: >= 0 } && gridPosition.x < gridSize.x && gridPosition.y < gridSize.y;
 
-        private static bool TryGetNodeIndexWithLowestFCost(NativeList<int> openList, NativeArray<PathNode> pathNodes, out int openListIndex) {
+        private static bool TryGetNodeIndexWithLowestFCost(in NativeList<int> openList, in NativeArray<PathNode> pathNodes, out int openListIndex) {
             var lowestCost = int.MaxValue;
             var lowestCostIndex = -1;
             for (var i = 0; i < openList.Length; i++) {
@@ -145,23 +152,46 @@ namespace Utils.Narkdagas.PathFinding {
             return openListIndex >= 0;
         }
 
-        private NativeArray<int2> BacktrackPathFromEndNode(int endNodeIndex, NativeArray<PathNode> pathNodes) {
+        private static bool BacktrackPathFromEndNode(int endNodeIndex, NativeArray<PathNode> pathNodes, NativeList<int2> resultPath) {
             var path = new NativeList<int2>(Allocator.Temp);
             var nextNodeIndex = endNodeIndex;
-            
+        
             while (nextNodeIndex != -1) {
                 var currentNode = pathNodes[nextNodeIndex];
                 path.Add(currentNode.XY);
                 nextNodeIndex = currentNode.ParentIndex;
             }
-            
-            var result = new NativeArray<int2>(path.Length, Allocator.Persistent);
+        
+            resultPath.ResizeUninitialized(path.Length);
             int reverseIndex = 0;
             for (int index = path.Length - 1; index >= 0; index--) {
-                result[reverseIndex++] = path[index];
+                resultPath[reverseIndex++] = path[index];
             }
+        
             path.Dispose();
-            return result;
+            return !resultPath.IsEmpty;
+        }
+
+        private static NativeArray<PathNode> InitLocalGrid(in NativeArray<PathNode> walkableFlags, in int2 gridSize, int2 toPosition, in Allocator allocator) {
+            var gridArray = new NativeArray<PathNode>(gridSize.x * gridSize.y, allocator);
+            //Initialize the PathNodes
+            for (var x = 0; x < gridSize.x; x++) {
+                for (var y = 0; y < gridSize.y; y++) {
+                    var gridPosition = new int2(x, y);
+                    var gridIndex = PathNodeIndex(gridPosition, gridSize);
+                    var pathNode = new PathNode {
+                        Index = gridIndex,
+                        XY = gridPosition,
+                        IsWalkable = walkableFlags[gridIndex].IsWalkable,
+                        GCost = int.MaxValue,
+                        HCost = DistanceCost(gridPosition, toPosition),
+                        ParentIndex = -1
+                    };
+                    gridArray[pathNode.Index] = pathNode;
+                }
+            }
+
+            return gridArray;
         }
     }
 }

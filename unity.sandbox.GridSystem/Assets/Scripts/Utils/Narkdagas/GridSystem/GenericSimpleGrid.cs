@@ -32,22 +32,13 @@ namespace Utils.Narkdagas.GridSystem {
         }
 
         public GenericSimpleGrid(Vector3 origin, int width, int height, float cellSize,
-            Func<int, int2, TGridType> createFunc,
-            // Action<TGridType, T> setValueAction,
-            // Action<TGridType, T> addValueAction,
-            bool debugEnabled = false) {
+            Func<int, int2, TGridType> createFunc, bool debugEnabled = false) {
             _origin = origin;
             _width = width;
             _height = height;
             _cellSize = cellSize;
-            // _setValueAction = setValueAction;
-            // _addValueAction = addValueAction;
             _gridArray = new TGridType[_width, _height];
             InitGrid(createFunc);
-            // if (debugEnabled) {
-            //     _debugTextArray = new TextMesh[_width, _height];
-            //     OnGridValueChanged += (_, eventArgs) => { _debugTextArray[eventArgs.X, eventArgs.Y].text = _gridArray[eventArgs.X, eventArgs.Y].ToString(); };
-            // }
         }
 
         private void InitGrid(Func<int, int2, TGridType> createFunc) {
@@ -192,8 +183,8 @@ namespace Utils.Narkdagas.GridSystem {
             return IsValidPosition(x, y);
         }
         
-        public NativeArray<TGridType> GetGridAsArray () {
-            var array = new NativeArray<TGridType>(_width * _height, Allocator.Temp);
+        public NativeArray<TGridType> GetGridAsArray (Allocator allocator) {
+            var array = new NativeArray<TGridType>(_width * _height, allocator);
             for (int x = 0; x < _width; x++) {
                 for (int y = 0; y < _height; y++) {
                     array[GetFlatIndex(x, y)] = _gridArray[x, y];
@@ -201,6 +192,7 @@ namespace Utils.Narkdagas.GridSystem {
             }
             return array;
         }
+        
 
         public void PaintDebugGrid() {
             if (_gridArray == null) {

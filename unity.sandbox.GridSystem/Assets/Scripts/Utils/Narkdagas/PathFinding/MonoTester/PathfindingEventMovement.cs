@@ -1,7 +1,15 @@
+using System;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Utils.Narkdagas.PathFinding.MonoTester {
-    public class PathfindingMovement : MonoBehaviour {
+    
+    public class NewGridPathRequestEvent : EventArgs {
+        public int2 FromGridPosition;
+        public int2 ToGridPosition;
+    }
+    
+    public class PathfindingEventMovement : MonoBehaviour {
 
         [SerializeField] private float speed = 10f;
         [SerializeField] private float distance = .5f;

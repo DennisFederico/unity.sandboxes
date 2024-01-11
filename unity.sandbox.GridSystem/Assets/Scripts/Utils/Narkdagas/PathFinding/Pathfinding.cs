@@ -23,14 +23,14 @@ namespace Utils.Narkdagas.PathFinding {
 
             //Initialize the algorithm
             var offsets = new NativeArray<int2>(8, Allocator.Temp);
-            offsets[0] = new(-1, 1); //Top Left
-            offsets[1] = new(0, 1); //Top
-            offsets[2] = new(1, 1); //Top Right
-            offsets[3] = new(1, 0); //Right
-            offsets[4] = new(1, -1); //Bottom Right
-            offsets[5] = new(0, -1); //Bottom
-            offsets[6] = new(-1, -1); //Bottom Left
-            offsets[7] = new(-1, 0); //Left
+            offsets[0] = new int2(-1, 1); //Top Left
+            offsets[1] = new int2(0, 1); //Top
+            offsets[2] = new int2(1, 1); //Top Right
+            offsets[3] = new int2(1, 0); //Right
+            offsets[4] = new int2(1, -1); //Bottom Right
+            offsets[5] = new int2(0, -1); //Bottom
+            offsets[6] = new int2(-1, -1); //Bottom Left
+            offsets[7] = new int2(-1, 0); //Left
 
             var openList = new NativeList<int>(Allocator.Temp);
             var closedList = new NativeList<int>(Allocator.Temp);
@@ -43,51 +43,50 @@ namespace Utils.Narkdagas.PathFinding {
             openList.Add(startNodeIndex);
 
             while (openList.Length > 0) {
-                if (TryGetNodeIndexWithLowestFCost(openList, grid, gridSize, out var openListIndex)) {
-                    var currentNodeIndex = openList[openListIndex];
-                    var gridPos = PathNodeGridPosition(currentNodeIndex, gridSize);
-                    var currentNode = grid.GetGridObject(gridPos.x, gridPos.y);
-                    if (currentNode.GridPosition.Equals(toPosition)) {
-                        //We found the path
-                        break;
+                if (!TryGetNodeIndexWithLowestFCost(openList, grid, gridSize, out var openListIndex)) continue;
+                var currentNodeIndex = openList[openListIndex];
+                var gridPos = PathNodeGridPosition(currentNodeIndex, gridSize);
+                var currentNode = grid.GetGridObject(gridPos.x, gridPos.y);
+                if (currentNode.XY.Equals(toPosition)) {
+                    //We found the path
+                    break;
+                }
+
+                //Remove the current node from the open list
+                openList.RemoveAtSwapBack(openListIndex);
+
+                //Add the current node to the closed list
+                closedList.Add(currentNodeIndex);
+
+                //Loop through the neighbors of the current node
+                foreach (var offset in offsets) {
+                    var neighborGridPosition = currentNode.XY + offset;
+                    if (!IsPositionInsideGrid(neighborGridPosition, gridSize)) {
+                        //This neighbor is outside the grid
+                        continue;
                     }
 
-                    //Remove the current node from the open list
-                    openList.RemoveAtSwapBack(openListIndex);
+                    var neighborNodeIndex = PathNodeIndex(neighborGridPosition, gridSize);
+                    if (closedList.Contains(neighborNodeIndex)) {
+                        //This neighbor is already in the closed list
+                        continue;
+                    }
 
-                    //Add the current node to the closed list
-                    closedList.Add(currentNodeIndex);
+                    var neighborNode = grid.GetGridObject(neighborGridPosition.x, neighborGridPosition.y);
+                    if (!neighborNode.IsWalkable) {
+                        //This neighbor is not walkable
+                        continue;
+                    }
 
-                    //Loop through the neighbors of the current node
-                    foreach (var offset in offsets) {
-                        var neighborGridPosition = currentNode.GridPosition + offset;
-                        if (!IsPositionInsideGrid(neighborGridPosition, gridSize)) {
-                            //This neighbor is outside the grid
-                            continue;
-                        }
-
-                        var neighborNodeIndex = PathNodeIndex(neighborGridPosition, gridSize);
-                        if (closedList.Contains(neighborNodeIndex)) {
-                            //This neighbor is already in the closed list
-                            continue;
-                        }
-
-                        var neighborNode = grid.GetGridObject(neighborGridPosition.x, neighborGridPosition.y);
-                        if (!neighborNode.IsWalkable) {
-                            //This neighbor is not walkable
-                            continue;
-                        }
-
-                        var tentativeGCost = currentNode.GCost + DistanceCost(currentNode.GridPosition, neighborNode.GridPosition);
-                        if (tentativeGCost < neighborNode.GCost) {
-                            //This is a better path to the neighbor
-                            neighborNode.GCost = tentativeGCost;
-                            neighborNode.ParentIndex = currentNodeIndex;
-                            grid.SetGridObject(neighborGridPosition.x, neighborGridPosition.y, neighborNode);
-                            if (!openList.Contains(neighborNodeIndex)) {
-                                //Add the neighbor to the open list
-                                openList.Add(neighborNodeIndex);
-                            }
+                    var tentativeGCost = currentNode.GCost + DistanceCost(currentNode.XY, neighborNode.XY);
+                    if (tentativeGCost < neighborNode.GCost) {
+                        //This is a better path to the neighbor
+                        neighborNode.GCost = tentativeGCost;
+                        neighborNode.ParentIndex = currentNodeIndex;
+                        grid.SetGridObject(neighborGridPosition.x, neighborGridPosition.y, neighborNode);
+                        if (!openList.Contains(neighborNodeIndex)) {
+                            //Add the neighbor to the open list
+                            openList.Add(neighborNodeIndex);
                         }
                     }
                 }
@@ -133,7 +132,7 @@ namespace Utils.Narkdagas.PathFinding {
         private static bool IsPositionInsideGrid(int2 gridPosition, int2 gridSize) =>
             gridPosition is { x: >= 0, y: >= 0 } && gridPosition.x < gridSize.x && gridPosition.y < gridSize.y;
 
-        private bool TryGetNodeIndexWithLowestFCost(NativeList<int> openList, GenericSimpleGrid<TPathNode> grid, int2 gridSize, out int openListIndex) {
+        private static bool TryGetNodeIndexWithLowestFCost(NativeList<int> openList, GenericSimpleGrid<TPathNode> grid, int2 gridSize, out int openListIndex) {
             var lowestCost = int.MaxValue;
             var lowestCostIndex = -1;
             for (var i = 0; i < openList.Length; i++) {
@@ -149,14 +148,14 @@ namespace Utils.Narkdagas.PathFinding {
             return openListIndex >= 0;
         }
 
-        private NativeArray<int2> BacktrackPathFromEndNode(int2 endPosition, GenericSimpleGrid<TPathNode> grid, int2 gridSize) {
+        private static NativeArray<int2> BacktrackPathFromEndNode(int2 endPosition, GenericSimpleGrid<TPathNode> grid, int2 gridSize) {
             var path = new NativeList<int2>(Allocator.Temp);
             var nextNodeIndex = PathNodeIndex(endPosition, gridSize);
             
             while (nextNodeIndex != -1) {
                 var gridPos = PathNodeGridPosition(nextNodeIndex, gridSize);
                 var currentNode = grid.GetGridObject(gridPos.x, gridPos.y);
-                path.Add(currentNode.GridPosition);
+                path.Add(currentNode.XY);
                 nextNodeIndex = currentNode.ParentIndex;
             }
             

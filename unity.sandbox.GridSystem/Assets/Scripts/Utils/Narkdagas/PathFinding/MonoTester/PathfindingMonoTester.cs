@@ -25,7 +25,7 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
             _grid = new GenericSimpleGrid<PathNode> (transform.position, width, height, cellSize,
                 (index, gridPos) => new PathNode {
                     Index = index,
-                    GridPosition = gridPos,
+                    XY = gridPos,
                     IsWalkable = true
                 },
                 debugEnabled);
