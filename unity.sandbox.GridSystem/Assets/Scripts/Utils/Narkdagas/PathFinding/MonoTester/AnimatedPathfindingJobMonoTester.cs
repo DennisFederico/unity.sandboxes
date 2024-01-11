@@ -12,6 +12,7 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
         public Vector3 CurrentPosition;
     }
 
+    //TODO WAIT FOR THE JOB TO COMPLETE ON A QUEUE AT FIXED UPDATE
     public class AnimatedPathfindingJobMonoTester : MonoBehaviour {
 
         [SerializeField] private int width;
@@ -174,7 +175,7 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
 
             if (Input.GetKeyDown(KeyCode.A)) {
                 var startTime = Time.realtimeSinceStartup;
-                Debug.Log($"Building an army of {armySize} jobs at {startTime}");
+                Debug.Log($"Building an platoon of {armySize} jobs at {startTime}");
             
                 var platoon = new PathfindingMovement[armySize];
                 var gridAsArray = _grid.GetGridAsArray(Allocator.TempJob);
@@ -209,7 +210,7 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
                 _army.AddRange(platoon);
                 
                 var endTime = Time.realtimeSinceStartup;
-                Debug.Log($"Added {armySize} to the army at {endTime} in {endTime - startTime}s");
+                Debug.Log($"Added {armySize} to the army for {_army.Count} it total - at {endTime} in {endTime - startTime}s");
             }
         }
 

@@ -106,10 +106,10 @@ namespace Utils.Narkdagas.PathFinding {
                 BacktrackPathFromEndNode(PathNodeIndex(toPosition, gridSize), localGrid, ResultPath);
             }
             
-            offsets.Dispose();
-            openList.Dispose();
-            closedList.Dispose();
-            localGrid.Dispose();
+            // offsets.Dispose();
+            // openList.Dispose();
+            // closedList.Dispose();
+            // localGrid.Dispose();
         }
 
         //Flattens the index of a 2D array into a 1D array
@@ -161,7 +161,7 @@ namespace Utils.Narkdagas.PathFinding {
                 resultPath[reverseIndex++] = path[index];
             }
         
-            path.Dispose();
+            // path.Dispose();
             // return !resultPath.IsEmpty;
         }
 
