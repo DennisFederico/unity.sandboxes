@@ -3,7 +3,6 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace Utils.Narkdagas.PathFinding {
 
@@ -13,8 +12,6 @@ namespace Utils.Narkdagas.PathFinding {
         private const int DiagonalCost = 14;
         private const int StraightCost = 10;
 
-        //TODO. Try making this a readonly field, as it could be shared between multiple jobs
-        //TODO. The type of this array can be different, with less fields, as we only need the GridPosition and IsWalkable
         [ReadOnly]
         public NativeArray<PathNode> GridArray;
         [ReadOnly]
