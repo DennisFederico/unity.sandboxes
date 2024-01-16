@@ -60,7 +60,7 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
             jobHandle.Complete();
 
             if (jobHandle.IsCompleted) {
-                var path3 = TransformPath(resultPath, cellSize);
+                var path3 = TransformPath(resultPath);
                 targetGameObject.SetPath(path3);
                 resultPath.Dispose();
                 gridAsArray.Dispose();
@@ -76,18 +76,18 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
             _random = Random.CreateFromIndex((uint)UnityEngine.Random.Range(0, int.MaxValue));
             _army = new List<PathfindingMovement>();
 
-            _grid = new GenericSimpleGrid<PathNode>(transform.position, width, height, cellSize,
+            var originOffset = transform.position;
+            _grid = new GenericSimpleGrid<PathNode>(originOffset, width, height, cellSize,
                 (index, gridPos) => new PathNode {
                     Index = index,
                     XY = gridPos,
                     IsWalkable = true
-                },
-                debugEnabled);
+                });
             _gridVisual = new GenericSimpleGridVisual<PathNode>(_grid, _mesh, (node) => {
                 if (!node.IsWalkable) return 0f;
                 if (node.ParentIndex != -1) return .5f;
                 return 0.25f;
-            });
+            }, originOffset);
             _grid.PaintDebugGrid();
         }
 
@@ -154,7 +154,7 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
 
                     if (jobHandle.IsCompleted) {
                         DebugPath(resultPath.AsArray().ToArray());
-                        var path3 = TransformPath(resultPath, cellSize);
+                        var path3 = TransformPath(resultPath);
                         if (!_player) {
                             _player = Instantiate(prefab);
                         }
@@ -199,7 +199,7 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
 
                 JobHandle.CompleteAll(handlers);
                 for (int i = 0; i < armySize; i++) {
-                    var path3 = TransformPath(results[i], cellSize);
+                    var path3 = TransformPath(results[i]);
                     results[i].Dispose();
                     platoon[i].SetPath(path3, this.NewGridPathRequestEvent);
                 }
@@ -214,11 +214,11 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
             }
         }
 
-        private Vector3[] TransformPath(NativeList<int2> path, float gridCellSize) {
+        private Vector3[] TransformPath(NativeList<int2> path) {
             var path3 = new Vector3[path.Length];
             int index = 0;
             foreach (var step in path) {
-                path3[index++] = _grid.GetWorldPosition(step.x, step.y) + new Vector3(gridCellSize / 2, gridCellSize / 2, 0);
+                path3[index++] = _grid.GetWorldPosition(step.x, step.y);
             }
             return path3;
         }
@@ -228,11 +228,10 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
         }
 
         private void DebugPath(int2[] path) {
-            var offset = new Vector3(cellSize / 2, cellSize / 2, 0);
             for (int i = 0; i < path.Length - 1; i++) {
                 Debug.DrawLine(
-                    _grid.GetWorldPosition(path[i].x, path[i].y) + offset,
-                    _grid.GetWorldPosition(path[i + 1].x, path[i + 1].y) + offset,
+                    _grid.GetWorldPosition(path[i].x, path[i].y),
+                    _grid.GetWorldPosition(path[i + 1].x, path[i + 1].y),
                     Color.red, 15f
                 );
             }

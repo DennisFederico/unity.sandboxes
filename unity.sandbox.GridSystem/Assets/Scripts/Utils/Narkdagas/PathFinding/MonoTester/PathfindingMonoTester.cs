@@ -21,19 +21,19 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
             _mesh = new Mesh();
             GetComponent<MeshRenderer>().material = gradientMaterial;
             GetComponent<MeshFilter>().mesh = _mesh;
-            
-            _grid = new GenericSimpleGrid<PathNode> (transform.position, width, height, cellSize,
+
+            var originOffset = transform.position;
+            _grid = new GenericSimpleGrid<PathNode> (originOffset, width, height, cellSize,
                 (index, gridPos) => new PathNode {
                     Index = index,
                     XY = gridPos,
                     IsWalkable = true
-                },
-                debugEnabled);
+                });
             _gridVisual = new GenericSimpleGridVisual<PathNode>(_grid, _mesh, (node) => {
                 if (!node.IsWalkable) return 0f;
                 if (node.ParentIndex != -1) return .5f;
                 return 0.25f;
-            });
+            }, originOffset);
 
             _grid.PaintDebugGrid();
         }
@@ -62,11 +62,10 @@ namespace Utils.Narkdagas.PathFinding.MonoTester {
         }
 
         private void DebugPath(int2[] path) {
-            var offset = new Vector3(cellSize/2, cellSize/2, 0);
             for (int i = 0; i < path.Length - 1; i++) {
                 Debug.DrawLine(
-                    _grid.GetWorldPosition(path[i].x, path[i].y) + offset,
-                    _grid.GetWorldPosition(path[i+1].x, path[i+1].y) + offset,
+                    _grid.GetWorldPosition(path[i].x, path[i].y),
+                    _grid.GetWorldPosition(path[i+1].x, path[i+1].y),
                     Color.red, 15f
                 );
             }

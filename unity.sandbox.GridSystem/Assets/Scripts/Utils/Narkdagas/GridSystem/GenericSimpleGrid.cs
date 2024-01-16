@@ -1,11 +1,10 @@
 using System;
-using CodeMonkey.Utils;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Utils.Narkdagas.GridSystem {
-    
+
     public class GenericSimpleGrid<TGridType> where TGridType : struct {
         private readonly Vector3 _origin;
         private readonly TGridType[,] _gridArray;
@@ -32,7 +31,7 @@ namespace Utils.Narkdagas.GridSystem {
         }
 
         public GenericSimpleGrid(Vector3 origin, int width, int height, float cellSize,
-            Func<int, int2, TGridType> createFunc, bool debugEnabled = false) {
+            Func<int, int2, TGridType> createFunc) {
             _origin = origin;
             _width = width;
             _height = height;
@@ -49,8 +48,8 @@ namespace Utils.Narkdagas.GridSystem {
             }
         }
 
-        //This is the left bottom corner of the cell
-        public Vector3 GetWorldPosition(int x, int y) => new Vector3(x, y) * _cellSize + _origin;
+        //return the grid center
+        public Vector3 GetWorldPosition(int x, int y) => new Vector3(x, y) * _cellSize + new Vector3(1, 1, 0) * (_cellSize * .5f) + _origin;
 
         public int GetFlatIndex(int x, int y) => y * _width + x;
 
@@ -171,60 +170,46 @@ namespace Utils.Narkdagas.GridSystem {
         private bool IsValidPosition(int x, int y) => x >= 0 && y >= 0 && x < _width && y < _height;
 
         public bool TryGetXY(Vector3 worldPosition, out int x, out int y) {
-            x = Mathf.FloorToInt((worldPosition - _origin).x / _cellSize);
-            y = Mathf.FloorToInt((worldPosition - _origin).y / _cellSize);
+            x = Mathf.FloorToInt((worldPosition.x - _origin.x) / _cellSize);
+            y = Mathf.FloorToInt((worldPosition.y - _origin.y) / _cellSize);
             return IsValidPosition(x, y);
         }
-        
+
         public bool TryGetXY(Vector3 worldPosition, out int2 coords) {
-            var x = Mathf.FloorToInt((worldPosition - _origin).x / _cellSize);
-            var y = Mathf.FloorToInt((worldPosition - _origin).y / _cellSize);
+            var x = Mathf.FloorToInt((worldPosition.x - _origin.x) / _cellSize);
+            var y = Mathf.FloorToInt((worldPosition.y - _origin.y) / _cellSize);
             coords = new int2(x, y);
             return IsValidPosition(x, y);
         }
-        
-        public NativeArray<TGridType> GetGridAsArray (Allocator allocator) {
+
+        public NativeArray<TGridType> GetGridAsArray(Allocator allocator) {
             var array = new NativeArray<TGridType>(_width * _height, allocator);
             for (int x = 0; x < _width; x++) {
                 for (int y = 0; y < _height; y++) {
                     array[GetFlatIndex(x, y)] = _gridArray[x, y];
                 }
             }
+
             return array;
         }
-        
+
 
         public void PaintDebugGrid() {
             if (_gridArray == null) {
                 return;
             }
+
+            var leftBottomOffset = new Vector3(1, 1, 0) * _cellSize * .5f;
+
             for (int x = 0; x < _gridArray.GetLength(0); x++) {
                 for (int y = 0; y < _gridArray.GetLength(1); y++) {
-                    Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x, y + 1), Color.black, 100f);
-                    Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x + 1, y), Color.black, 100f);
+                    Debug.DrawLine(GetWorldPosition(x, y) - leftBottomOffset, GetWorldPosition(x, y + 1) - leftBottomOffset, Color.black, 100f);
+                    Debug.DrawLine(GetWorldPosition(x, y) - leftBottomOffset, GetWorldPosition(x + 1, y) - leftBottomOffset, Color.black, 100f);
                 }
             }
-            Debug.DrawLine(GetWorldPosition(0, _height), GetWorldPosition(_width, _height), Color.black, 100f);
-            Debug.DrawLine(GetWorldPosition(_width, 0), GetWorldPosition(_width, _height), Color.black, 100f);
-        }
-        
-        public void DebugGrid() {
-            if (_gridArray == null) {
-                return;
-            }
-        
-            for (int x = 0; x < _gridArray.GetLength(0); x++) {
-                for (int y = 0; y < _gridArray.GetLength(1); y++) {
-                    _debugTextArray[x, y] = UtilsClass.CreateWorldText(_gridArray[x, y].ToString(), null,
-                        GetWorldPosition(x, y) + new Vector3(_cellSize, _cellSize) * 0.5f, 20, Color.white,
-                        TextAnchor.MiddleCenter, TextAlignment.Center);
-                    Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x, y + 1), Color.white, 100f);
-                    Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x + 1, y), Color.white, 100f);
-                }
-            }
-        
-            Debug.DrawLine(GetWorldPosition(0, _height), GetWorldPosition(_width, _height), Color.white, 100f);
-            Debug.DrawLine(GetWorldPosition(_width, 0), GetWorldPosition(_width, _height), Color.white, 100f);
+            
+            Debug.DrawLine(GetWorldPosition(0, _height) - leftBottomOffset, GetWorldPosition(_width, _height) - leftBottomOffset, Color.black, 100f);
+            Debug.DrawLine(GetWorldPosition(_width, 0) - leftBottomOffset, GetWorldPosition(_width, _height) - leftBottomOffset, Color.black, 100f);
         }
     }
 }

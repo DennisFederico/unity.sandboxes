@@ -21,10 +21,11 @@ namespace Utils.Narkdagas.GridSystem.MonoTester {
 
         void Start() {
             _camera = Camera.main;
-            _grid = new GenericSimpleGrid<int>(transform.position, width, height, cellSize, (_, _) => 0, debugEnabled);
-            _gridVisual = new GenericSimpleGridVisual<int>(_grid, _mesh, (value) => value / 100f);
+            var offsetPosition = transform.position;
+            _grid = new GenericSimpleGrid<int>(offsetPosition, width, height, cellSize, (_, _) => 0);
+            _gridVisual = new GenericSimpleGridVisual<int>(_grid, _mesh, (value) => value / 100f, offsetPosition);
 
-            if (debugEnabled) _grid.DebugGrid();
+            if (debugEnabled) _grid.PaintDebugGrid();
         }
 
         void Update() {

@@ -491,8 +491,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98ec6f7577a54e7b8d298566ea16e7dc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 25
-  height: 25
+  width: 34
+  height: 19
   cellSize: 3
   debugEnabled: 0
   gradientMaterial: {fileID: 2100000, guid: 7e8b3285923dd4b5ba94a684317c5a75, type: 2}
@@ -557,7 +557,7 @@ Transform:
   m_GameObject: {fileID: 1936856729}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -2.5, y: -4.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

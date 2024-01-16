@@ -7,17 +7,19 @@ namespace Utils.Narkdagas.GridSystem {
     public class GenericSimpleGridVisual<TGridType> where TGridType : struct {
 
         private GenericSimpleGrid<TGridType> _grid;
+        private Vector3 _originOffset;
         private Mesh _mesh;
         private Vector3 _quadSize;
         private Func<TGridType, float> _normalizeFunc;
         private bool _updateVisual;
 
-        public GenericSimpleGridVisual(GenericSimpleGrid<TGridType> grid, Mesh mesh, Func<TGridType, float> normalizeFunc) {
+        public GenericSimpleGridVisual(GenericSimpleGrid<TGridType> grid, Mesh mesh, Func<TGridType, float> normalizeFunc, Vector3 originOffset) {
             _grid = grid;
             _mesh = mesh;
-            _quadSize = new Vector3(1, 1) * _grid.CellSize;
+            _quadSize = new Vector3(1, 1, 0) * _grid.CellSize;
             _normalizeFunc = normalizeFunc;
             _grid.OnGridValueChanged += GridOnValueChanged;
+            _originOffset = originOffset;
             PaintVisual();
         }
 
@@ -44,11 +46,12 @@ namespace Utils.Narkdagas.GridSystem {
                     var index = _grid.GetFlatIndex(x, y);
                     var normalizedValue = _normalizeFunc(_grid.GetGridObject(x, y));
                     var uvValue = new Vector2(normalizedValue, 0f);
-                    MeshUtils.AddToMeshArrays(vertices,
+                    MeshUtils.AddToMeshArrays(
+                        vertices,
                         uvs,
                         triangles,
                         index,
-                        _grid.GetWorldPosition(x, y) + _quadSize * 0.5f,
+                        _grid.GetWorldPosition(x, y) - _originOffset, //Grid center
                         0,
                         _quadSize,
                         uvValue,
