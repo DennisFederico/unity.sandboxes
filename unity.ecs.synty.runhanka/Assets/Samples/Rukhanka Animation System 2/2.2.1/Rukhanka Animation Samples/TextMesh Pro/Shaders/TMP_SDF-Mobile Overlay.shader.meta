@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 4ee9854710a4845bcbede9815040f30a
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 298480
+  packageName: Rukhanka Animation System 2
+  packageVersion: 2.2.1
+  assetPath: Packages/com.rukhanka.animation/Samples~/Samples/TextMesh Pro/Shaders/TMP_SDF-Mobile
+    Overlay.shader
+  uploadId: 754107

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 4e7cd6ae156dc408b90af315f5c19e0e
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 298480
+  packageName: Rukhanka Animation System 2
+  packageVersion: 2.2.1
+  assetPath: Packages/com.rukhanka.animation/Samples~/Samples/TextMesh Pro/Shaders/TMP_SDF-Mobile
+    Masking.shader
+  uploadId: 754107

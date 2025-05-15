@@ -1,0 +1,26 @@
+fileFormatVersion: 2
+guid: 4a0aa9b0cf3ab4bf4b5b9e2c39fb053e
+timeCreated: 1484171297
+licenseType: Store
+TrueTypeFontImporter:
+  serializedVersion: 2
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 1
+  characterPadding: 0
+  includeFontData: 1
+  use2xBehaviour: 0
+  fontNames: []
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 298480
+  packageName: Rukhanka Animation System 2
+  packageVersion: 2.2.1
+  assetPath: Packages/com.rukhanka.animation/Samples~/Samples/TextMesh Pro/Fonts/LiberationSans.ttf
+  uploadId: 754107
