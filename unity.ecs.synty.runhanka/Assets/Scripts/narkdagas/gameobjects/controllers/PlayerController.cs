@@ -5,36 +5,36 @@ using UnityEngine.InputSystem;
 namespace narkdagas.gameobjects.controllers {
     [RequireComponent(typeof(CharacterController))]
     public class PlayerController : MonoBehaviour {
-        [Header("Input and State")]
+        [Header("Input and State - Internals")]
         [SerializeField] private float forwardMoveInput;
-
         [SerializeField] private float sideMoveInput;
-        [SerializeField] private Vector3 moveVector;
-
+        [SerializeField] private bool jumpPressed;
+        [SerializeField] private Vector3 currentMoveDirection;
+        [SerializeField] private Vector3 lastMoveDirection;
+        [SerializeField] private bool isMoving;
+        [SerializeField] private bool isJumping;
+        
         [SerializeField] private float verticalVelocity;
-
-        [Header("References")]
-        private CharacterController _characterController;
-
-        private Camera _mainCamera;
-
+        
         [Header("Movement Configuration")]
         [SerializeField] private float walkSpeed = 5f;
-
         [SerializeField] private float turnSpeed = 1f;
         [SerializeField] private float rotationAlignThreshold = 10f;
-        [SerializeField] private float gravity = 9.8f;
+        [SerializeField] private float jumpHeight = 1.5f;
+        [SerializeField] private float gravity = -9.8f;
 
         [Header("Aim Line")]
-        public LineRenderer aimLine;
+        [SerializeField] public LineRenderer aimLine;
+        [SerializeField] public float aimLineLength = 10f;
 
-        public float aimLineLength = 10f;
-
+        [Header("Internals")]
+        private CharacterController _characterController;
+        private Camera _mainCamera;
         private CommandBuilder _draw;
-
+        
 
         private void Awake() {
-            _draw = Draw.ingame;
+            _draw = Draw.editor;
             _draw.WithDuration(1f);
             _characterController = GetComponent<CharacterController>();
             _mainCamera ??= Camera.main;
@@ -44,7 +44,14 @@ namespace narkdagas.gameobjects.controllers {
         private void CaptureInput() {
             forwardMoveInput = Input.GetAxis("Vertical");
             sideMoveInput = Input.GetAxis("Horizontal");
-            moveVector = new Vector3(sideMoveInput, 0, forwardMoveInput);
+            currentMoveDirection = new Vector3(sideMoveInput, 0, forwardMoveInput);
+            isMoving = currentMoveDirection.sqrMagnitude > 0.01f;
+            if (isMoving) {
+                lastMoveDirection = (transform.forward * forwardMoveInput + transform.right * sideMoveInput).normalized;
+            }
+            
+            jumpPressed = Input.GetButtonDown("Jump");
+            isJumping = !_characterController.isGrounded || (jumpPressed && _characterController.isGrounded);
         }
 
         private void Update() {
@@ -56,14 +63,38 @@ namespace narkdagas.gameobjects.controllers {
         private void Move() {
             GroundedMove();
             Turn();
-            UpdateAimLine();
+            //UpdateAimLine();
         }
 
         private void GroundedMove() {
+
+            verticalVelocity = VerticalForceCalculation();
             //Lateral movement (left/right) relative to the transform.right (Vertical Input?)
             //Forward/backward movement relative to the transform.forward (Horizontal Input?)
-            Vector3 moveDirection = (transform.forward * moveVector.z + transform.right * moveVector.x).normalized;
-            _characterController.Move(moveDirection * (walkSpeed * Time.deltaTime));
+            //Vector3 moveDirection = (transform.forward * currentMoveDirection.z + transform.right * currentMoveDirection.x).normalized;
+            //Using the last move direction, this is reset when the keys are released
+            //Vector3.ClampMagnitude is used to prevent diagonal movement from being faster
+            Vector3 moveDirection = Vector3.ClampMagnitude(isMoving ? lastMoveDirection : Vector3.zero, 1f);
+            
+            _characterController.Move(((moveDirection * walkSpeed) + (verticalVelocity * Vector3.up)) * Time.deltaTime);
+        }
+
+        private float VerticalForceCalculation() { 
+            //We hit the ground
+            if (_characterController.isGrounded && verticalVelocity < 0) {
+                verticalVelocity = 0f;
+            }
+            
+            //Jump
+            if (jumpPressed && _characterController.isGrounded) {
+                //Add jump force
+                verticalVelocity = Mathf.Sqrt(-2f * gravity * jumpHeight); // Jump height of 1.5 units
+            }
+            
+            //Apply gravity
+            verticalVelocity += gravity * Time.deltaTime;
+            
+            return verticalVelocity;
         }
 
         private void Turn() {
@@ -101,19 +132,7 @@ namespace narkdagas.gameobjects.controllers {
                 }
             }
         }
-
-        private float VerticalForceCalculation() {
-            // Debug.Log($"Controller Grounded? {_characterController.isGrounded} - Vertical Velocity: {verticalVelocity}");
-            if (_characterController.isGrounded) {
-                verticalVelocity = -1f;
-            } else {
-                //Make the character fall
-                verticalVelocity -= gravity * Time.deltaTime;
-            }
-
-            return verticalVelocity;
-        }
-
+        
         //TODO Refactor with the TURN method to re-use the raycast
         private void UpdateAimLine() {
             //Move start point to a weapon muzzle child object for realism
