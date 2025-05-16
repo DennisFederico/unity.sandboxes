@@ -1,4 +1,5 @@
 using Drawing;
+using narkdagas.inputcontrol;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,6 +8,7 @@ namespace narkdagas.gameobjects.controllers {
     public class PlayerController : MonoBehaviour {
         [Header("Input and State - Internals")]
         [SerializeField] private float forwardMoveInput;
+
         [SerializeField] private float sideMoveInput;
         [SerializeField] private bool jumpPressed;
         [SerializeField] private Vector3 currentMoveDirection;
@@ -15,6 +17,7 @@ namespace narkdagas.gameobjects.controllers {
 
         [Header("Movement Configuration")]
         [SerializeField] private float walkSpeed = 5f;
+
         [SerializeField] private float sprintSpeed = 5f;
         [SerializeField] private float turnSpeed = 1f;
         [SerializeField] private float rotationAlignThreshold = 10f;
@@ -22,46 +25,84 @@ namespace narkdagas.gameobjects.controllers {
         [SerializeField] private float gravity = -9.8f;
 
         [Header("Aim Line")]
-        [SerializeField] public LineRenderer aimLine;
+        [SerializeField] public GameObject aimLinePrefab;
 
         [SerializeField] public float aimLineLength = 10f;
+        private LineRenderer _aimLine;
 
         [Header("Internals")]
         private CharacterController _characterController;
 
+        private GameInputControls _gameInputControls;
+
         private Camera _mainCamera;
         private CommandBuilder _draw;
-
 
         private void Awake() {
             _draw = Draw.editor;
             _draw.WithDuration(1f);
             _characterController = GetComponent<CharacterController>();
             _mainCamera ??= Camera.main;
+            _gameInputControls = new GameInputControls();
         }
 
-        //TODO - Switch to new input system
-        private void CaptureInput() {
-            forwardMoveInput = Input.GetAxis("Vertical");
-            sideMoveInput = Input.GetAxis("Horizontal");
-            currentMoveDirection = new Vector3(sideMoveInput, 0, forwardMoveInput);
+        private void OnEnable() {
+            _gameInputControls.GameControls.Enable();
+            _gameInputControls.GameControls.PlayerMove.started += OnPlayerMove;
+            _gameInputControls.GameControls.PlayerMove.performed += OnPlayerMove;
+            _gameInputControls.GameControls.PlayerMove.canceled += OnPlayerMove;
+            _gameInputControls.GameControls.PlayerJump.started += OnPlayerJumpStateChanged;
+            _gameInputControls.GameControls.PlayerJump.performed += OnPlayerJumpStateChanged;
+            _gameInputControls.GameControls.PlayerJump.canceled += OnPlayerJumpStateChanged;
+        }
+
+        private void OnDisable() {
+            _gameInputControls.GameControls.PlayerMove.started -= OnPlayerMove;
+            _gameInputControls.GameControls.PlayerMove.performed -= OnPlayerMove;
+            _gameInputControls.GameControls.PlayerMove.canceled -= OnPlayerMove;
+            _gameInputControls.GameControls.PlayerJump.started -= OnPlayerJumpStateChanged;
+            _gameInputControls.GameControls.PlayerJump.performed -= OnPlayerJumpStateChanged;
+            _gameInputControls.GameControls.PlayerJump.canceled -= OnPlayerJumpStateChanged;
+            _gameInputControls.GameControls.Disable();
+        }
+
+        public void OnPlayerMove(InputAction.CallbackContext context) {
+            Debug.Log($"Player Move {context.phase} {context.ReadValue<Vector3>()}");
+            currentMoveDirection = context.phase == InputActionPhase.Canceled ? Vector3.zero : context.ReadValue<Vector3>();
+            forwardMoveInput = currentMoveDirection.z;
+            sideMoveInput = currentMoveDirection.x;
             isMoving = currentMoveDirection.sqrMagnitude > 0.01f;
             if (isMoving) {
                 currentMoveDirection = (transform.forward * forwardMoveInput + transform.right * sideMoveInput).normalized;
             }
-            jumpPressed = Input.GetButtonDown("Jump");
+        }
+
+        private void OnPlayerJumpStateChanged(InputAction.CallbackContext context) {
+            jumpPressed = context.phase switch {
+                InputActionPhase.Started => true,
+                InputActionPhase.Performed => false,
+                InputActionPhase.Canceled => false,
+                _ => jumpPressed
+            };
+        }
+
+        private void Start() {
+            GameObject lineObj = Instantiate(aimLinePrefab, transform.position, Quaternion.identity);
+            _aimLine = lineObj.GetComponent<LineRenderer>();
+            _aimLine.positionCount = 2;
+            _aimLine.useWorldSpace = true;
+            _aimLine.enabled = true;
         }
 
         private void Update() {
             _draw.Line(transform.position, transform.position + transform.forward * 20, Color.blue);
-            CaptureInput();
             Move();
         }
 
         private void Move() {
             GroundedMove();
             Turn();
-            //UpdateAimLine();
+            UpdateAimLine();
         }
 
         private void GroundedMove() {
@@ -80,7 +121,7 @@ namespace narkdagas.gameobjects.controllers {
             if (_characterController.isGrounded) {
                 if (jumpPressed) {
                     //Add jump force
-                    verticalVelocity = Mathf.Sqrt(-1f * gravity + jumpHeight); // Jump height of 1.5 units
+                    verticalVelocity = Mathf.Sqrt(2f * -gravity * jumpHeight); // Jump height of 1.5 units
                 } else {
                     verticalVelocity = -1f;
                 }
@@ -127,6 +168,11 @@ namespace narkdagas.gameobjects.controllers {
             }
         }
 
+        private bool TryGetRaycastHit(out RaycastHit hitInfo) {
+            Ray ray = _mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
+            return Physics.Raycast(ray, out hitInfo);
+        }
+
         //TODO Refactor with the TURN method to re-use the raycast
         private void UpdateAimLine() {
             //Move start point to a weapon muzzle child object for realism
@@ -135,28 +181,17 @@ namespace narkdagas.gameobjects.controllers {
             //Use the direction * maxLength unless hitInfo.distance < maxLength (to clip at obstacles)
 
             //Would you like to make the line turn red when aimed at an enemy or dynamically bend it based on projectile arcs later on?
-            Ray ray = _mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
+            Vector3 start = transform.position + Vector3.up * 0.5f; // Slightly above the ground
+            Vector3 end = start + transform.forward * aimLineLength; // Default direction
+            // Optional: aim towards the mouse cursor
 
-            if (Physics.Raycast(ray, out RaycastHit hitInfo)) {
-                Vector3 direction = hitInfo.point - transform.position;
-                direction.y = 0f;
-
-                if (direction.sqrMagnitude > 0.1f) {
-                    direction.Normalize();
-                    Vector3 start = transform.position + Vector3.up * 0.5f; // Slightly above ground
-                    //Vector3 end = start + direction.normalized * aimLineLength;
-                    //Clip on ray hit
-                    Vector3 end = hitInfo.point;
-                    if ((end - start).magnitude > aimLineLength)
-                        end = start + direction * aimLineLength;
-
-                    aimLine.SetPosition(0, start);
-                    aimLine.SetPosition(1, end);
-                    aimLine.enabled = true;
-                }
-            } else {
-                aimLine.enabled = false;
+            if (TryGetRaycastHit(out var hitInfo)) {
+                Vector3 direction = (hitInfo.point - start).normalized;
+                end = start + direction * aimLineLength;
             }
+
+            _aimLine.SetPosition(0, start);
+            _aimLine.SetPosition(1, end);
         }
     }
 }
