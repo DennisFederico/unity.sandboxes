@@ -1,4 +1,3 @@
-using Drawing;
 using narkdagas.inputcontrol;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -13,6 +12,8 @@ namespace narkdagas.gameobjects.controllers {
         [SerializeField] private Vector3 lastForwardDirection;
         [SerializeField] private bool jumpPressed;
         [SerializeField] private Vector3 currentMoveDirection;
+        [SerializeField] private Vector2 currentMousePosition;
+        [SerializeField] private Vector2 joystickDelta;
         [SerializeField] private bool isMoving;
         [SerializeField] private float verticalVelocity;
 
@@ -33,15 +34,13 @@ namespace narkdagas.gameobjects.controllers {
 
         [Header("Internals")]
         private CharacterController _characterController;
-
         private GameInputControls _gameInputControls;
-
         private Camera _mainCamera;
-        private CommandBuilder _draw;
+        // private CommandBuilder _draw;
 
         private void Awake() {
-            _draw = Draw.editor;
-            _draw.WithDuration(1f);
+            // _draw = Draw.editor;
+            // _draw.WithDuration(1f);
             _characterController = GetComponent<CharacterController>();
             _mainCamera ??= Camera.main;
             _gameInputControls = new GameInputControls();
@@ -55,6 +54,12 @@ namespace narkdagas.gameobjects.controllers {
             _gameInputControls.GameControls.PlayerJump.started += OnPlayerJumpStateChanged;
             _gameInputControls.GameControls.PlayerJump.performed += OnPlayerJumpStateChanged;
             _gameInputControls.GameControls.PlayerJump.canceled += OnPlayerJumpStateChanged;
+            //_gameInputControls.GameControls.AimMouse.started += OnAimMouse;
+            _gameInputControls.GameControls.AimMouse.performed += OnAimMouse;
+            //_gameInputControls.GameControls.AimMouse.canceled += OnAimMouse;
+            _gameInputControls.GameControls.AimJoystick.started += OnAimJoystick;
+            _gameInputControls.GameControls.AimJoystick.performed += OnAimJoystick;
+            _gameInputControls.GameControls.AimJoystick.canceled += OnAimJoystick;
         }
 
         private void OnDisable() {
@@ -64,6 +69,12 @@ namespace narkdagas.gameobjects.controllers {
             _gameInputControls.GameControls.PlayerJump.started -= OnPlayerJumpStateChanged;
             _gameInputControls.GameControls.PlayerJump.performed -= OnPlayerJumpStateChanged;
             _gameInputControls.GameControls.PlayerJump.canceled -= OnPlayerJumpStateChanged;
+            //_gameInputControls.GameControls.AimMouse.started -= OnAimMouse;
+            _gameInputControls.GameControls.AimMouse.performed -= OnAimMouse;
+            //_gameInputControls.GameControls.AimMouse.canceled -= OnAimMouse;
+            _gameInputControls.GameControls.AimJoystick.started -= OnAimJoystick;
+            _gameInputControls.GameControls.AimJoystick.performed -= OnAimJoystick;
+            _gameInputControls.GameControls.AimJoystick.canceled -= OnAimJoystick;
             _gameInputControls.GameControls.Disable();
         }
 
@@ -79,6 +90,15 @@ namespace narkdagas.gameobjects.controllers {
             sideMoveInput = moveDirection.x;
         }
 
+        public void OnAimMouse(InputAction.CallbackContext context) {
+            currentMousePosition = context.phase == InputActionPhase.Canceled ? Vector2.zero : context.ReadValue<Vector2>();
+            
+        }
+
+        public void OnAimJoystick(InputAction.CallbackContext context) {
+            joystickDelta = context.phase == InputActionPhase.Canceled ? Vector2.zero : context.ReadValue<Vector2>();
+        }
+        
         private void OnPlayerJumpStateChanged(InputAction.CallbackContext context) {
             jumpPressed = context.phase switch {
                 InputActionPhase.Started => true,
@@ -135,19 +155,15 @@ namespace narkdagas.gameobjects.controllers {
         }
 
         private void Turn() {
-            //USEFUL TIP TO RAYCAST OVER A PLANE
-            //to prevent accidental ray hits on walls, enemies, or slopes
-            // Plane aimPlane = new Plane(Vector3.up, transform.position);
-            // Ray ray = _mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-            // if (aimPlane.Raycast(ray, out float enter)) {
-            //     Vector3 hitPoint = ray.GetPoint(enter);
-            //     ...
-            // }
             
-            if (TryGetRaycastHit(out var hitInfo)) {
-                Vector3 direction = hitInfo.point - transform.position;
+            //TODO - Handle joystickDelta
+            // if (TryGetRaycastHit(out var hitInfo, Mouse.current.position.ReadValue())) {
+            // if (TryGetRaycastHit(out var hitInfo, currentMousePosition)) {
+            //     Vector3 direction = hitInfo.point - transform.position;
+            //     direction.y = 0f;
+            if (TryGetRaycastPlaneHit(out var hitPosition, currentMousePosition, Vector3.up,  transform.position + Vector3.up * 0.5f)) {
+                Vector3 direction = hitPosition - transform.position;
                 direction.y = 0f;
-
                 //TRY THIS TO AVOID SPINNING WITH THE ROTATING CAMERA
                 //limit hitInfo.point to a forward-facing cone using Vector3.Dot(transform.forward, direction) > 0
 
@@ -161,30 +177,47 @@ namespace narkdagas.gameobjects.controllers {
             }
         }
 
-        private bool TryGetRaycastHit(out RaycastHit hitInfo) {
-            Ray ray = _mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-            return Physics.Raycast(ray, out hitInfo);
-        }
-
         //TODO Refactor with the TURN method to re-use the raycast
         private void UpdateAimLine() {
+            //TODOS: ---
             //Move start point to a weapon muzzle child object for realism
-            //Use a layer mask in Physics.Raycast to ignore enemies or props
             //Add a glow or pulse effect on the line’s material
             //Use the direction * maxLength unless hitInfo.distance < maxLength (to clip at obstacles)
-
-            //Would you like to make the line turn red when aimed at an enemy or dynamically bend it based on projectile arcs later on?
+            //make the line turn red when aimed at an enemy or dynamically bend it based on projectile arcs later on?
+            
             Vector3 start = transform.position + Vector3.up * 0.5f; // Slightly above the ground
             Vector3 end = start + transform.forward * aimLineLength; // Default direction
-            // Optional: aim towards the mouse cursor
-
-            if (TryGetRaycastHit(out var hitInfo)) {
-                Vector3 direction = (hitInfo.point - start).normalized;
+            
+            // if (TryGetRaycastHit(out var hitInfo, currentMousePosition)) {
+            //     Vector3 direction = (hitInfo.point - start).normalized;
+            //     end = start + direction * aimLineLength;
+            // }
+            
+            if (TryGetRaycastPlaneHit(out var hitPosition, currentMousePosition, Vector3.up, transform.position + Vector3.up * 0.5f)) {
+                Vector3 direction = (hitPosition - start).normalized; 
                 end = start + direction * aimLineLength;
             }
 
             _aimLine.SetPosition(0, start);
             _aimLine.SetPosition(1, end);
+        }
+        
+        
+        private bool TryGetRaycastHit(out RaycastHit hitInfo, Vector2 aimPosition) {
+            // Ray ray = _mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
+            Ray ray = _mainCamera.ScreenPointToRay(aimPosition);
+            return Physics.Raycast(ray, out hitInfo);
+        }
+        
+        private bool TryGetRaycastPlaneHit(out Vector3 hitPosition, Vector2 aimPosition, Vector3 normal, Vector3 pointInPlane) {
+            var aimPlane = new Plane(normal, pointInPlane);
+            var ray = _mainCamera.ScreenPointToRay(aimPosition);
+            if (aimPlane.Raycast(ray, out float hitDistance)) {
+                hitPosition = ray.GetPoint(hitDistance);
+                return true;
+            }
+            hitPosition = Vector3.zero;
+            return false;
         }
     }
 }

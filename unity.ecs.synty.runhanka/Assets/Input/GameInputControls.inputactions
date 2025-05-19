@@ -15,6 +15,24 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "AimMouse",
+                    "type": "Value",
+                    "id": "bb3a8644-8ea1-4f07-8d38-ef9d81fb9a7a",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "AimJoystick",
+                    "type": "Value",
+                    "id": "1a5c8a0e-cf9b-4170-98f0-2a3979ba56b5",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "PlayerJump",
                     "type": "Button",
                     "id": "91004f90-5658-4352-bbda-12e4ddf742ef",
@@ -141,6 +159,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "PlayerJump",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0976ff79-f210-4a67-b51f-928d2e1827a6",
+                    "path": "<Mouse>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "AimMouse",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7b85ac82-9e02-452b-888e-4e2c0156bc1a",
+                    "path": "<Gamepad>/rightStick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "AimJoystick",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

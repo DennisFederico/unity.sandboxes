@@ -103,6 +103,24 @@ namespace narkdagas.inputcontrol
                     ""initialStateCheck"": true
                 },
                 {
+                    ""name"": ""AimMouse"",
+                    ""type"": ""Value"",
+                    ""id"": ""bb3a8644-8ea1-4f07-8d38-ef9d81fb9a7a"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""AimJoystick"",
+                    ""type"": ""Value"",
+                    ""id"": ""1a5c8a0e-cf9b-4170-98f0-2a3979ba56b5"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
                     ""name"": ""PlayerJump"",
                     ""type"": ""Button"",
                     ""id"": ""91004f90-5658-4352-bbda-12e4ddf742ef"",
@@ -231,6 +249,28 @@ namespace narkdagas.inputcontrol
                     ""action"": ""PlayerJump"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0976ff79-f210-4a67-b51f-928d2e1827a6"",
+                    ""path"": ""<Mouse>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AimMouse"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7b85ac82-9e02-452b-888e-4e2c0156bc1a"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""AimJoystick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -240,6 +280,8 @@ namespace narkdagas.inputcontrol
             // GameControls
             m_GameControls = asset.FindActionMap("GameControls", throwIfNotFound: true);
             m_GameControls_PlayerMove = m_GameControls.FindAction("PlayerMove", throwIfNotFound: true);
+            m_GameControls_AimMouse = m_GameControls.FindAction("AimMouse", throwIfNotFound: true);
+            m_GameControls_AimJoystick = m_GameControls.FindAction("AimJoystick", throwIfNotFound: true);
             m_GameControls_PlayerJump = m_GameControls.FindAction("PlayerJump", throwIfNotFound: true);
             m_GameControls_RotateCamera = m_GameControls.FindAction("RotateCamera", throwIfNotFound: true);
         }
@@ -323,6 +365,8 @@ namespace narkdagas.inputcontrol
         private readonly InputActionMap m_GameControls;
         private List<IGameControlsActions> m_GameControlsActionsCallbackInterfaces = new List<IGameControlsActions>();
         private readonly InputAction m_GameControls_PlayerMove;
+        private readonly InputAction m_GameControls_AimMouse;
+        private readonly InputAction m_GameControls_AimJoystick;
         private readonly InputAction m_GameControls_PlayerJump;
         private readonly InputAction m_GameControls_RotateCamera;
         /// <summary>
@@ -340,6 +384,14 @@ namespace narkdagas.inputcontrol
             /// Provides access to the underlying input action "GameControls/PlayerMove".
             /// </summary>
             public InputAction @PlayerMove => m_Wrapper.m_GameControls_PlayerMove;
+            /// <summary>
+            /// Provides access to the underlying input action "GameControls/AimMouse".
+            /// </summary>
+            public InputAction @AimMouse => m_Wrapper.m_GameControls_AimMouse;
+            /// <summary>
+            /// Provides access to the underlying input action "GameControls/AimJoystick".
+            /// </summary>
+            public InputAction @AimJoystick => m_Wrapper.m_GameControls_AimJoystick;
             /// <summary>
             /// Provides access to the underlying input action "GameControls/PlayerJump".
             /// </summary>
@@ -377,6 +429,12 @@ namespace narkdagas.inputcontrol
                 @PlayerMove.started += instance.OnPlayerMove;
                 @PlayerMove.performed += instance.OnPlayerMove;
                 @PlayerMove.canceled += instance.OnPlayerMove;
+                @AimMouse.started += instance.OnAimMouse;
+                @AimMouse.performed += instance.OnAimMouse;
+                @AimMouse.canceled += instance.OnAimMouse;
+                @AimJoystick.started += instance.OnAimJoystick;
+                @AimJoystick.performed += instance.OnAimJoystick;
+                @AimJoystick.canceled += instance.OnAimJoystick;
                 @PlayerJump.started += instance.OnPlayerJump;
                 @PlayerJump.performed += instance.OnPlayerJump;
                 @PlayerJump.canceled += instance.OnPlayerJump;
@@ -397,6 +455,12 @@ namespace narkdagas.inputcontrol
                 @PlayerMove.started -= instance.OnPlayerMove;
                 @PlayerMove.performed -= instance.OnPlayerMove;
                 @PlayerMove.canceled -= instance.OnPlayerMove;
+                @AimMouse.started -= instance.OnAimMouse;
+                @AimMouse.performed -= instance.OnAimMouse;
+                @AimMouse.canceled -= instance.OnAimMouse;
+                @AimJoystick.started -= instance.OnAimJoystick;
+                @AimJoystick.performed -= instance.OnAimJoystick;
+                @AimJoystick.canceled -= instance.OnAimJoystick;
                 @PlayerJump.started -= instance.OnPlayerJump;
                 @PlayerJump.performed -= instance.OnPlayerJump;
                 @PlayerJump.canceled -= instance.OnPlayerJump;
@@ -450,6 +514,20 @@ namespace narkdagas.inputcontrol
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnPlayerMove(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "AimMouse" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnAimMouse(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "AimJoystick" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnAimJoystick(InputAction.CallbackContext context);
             /// <summary>
             /// Method invoked when associated input action "PlayerJump" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
             /// </summary>
