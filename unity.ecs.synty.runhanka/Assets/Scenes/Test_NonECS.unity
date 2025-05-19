@@ -5065,7 +5065,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   forwardMoveInput: 0
   sideMoveInput: 0
-  useLastForwardDirection: 0
+  useLastForwardDirection: 1
   lastForwardDirection: {x: 0, y: 0, z: 0}
   jumpPressed: 0
   currentMoveDirection: {x: 0, y: 0, z: 0}
@@ -20712,11 +20712,9 @@ MonoBehaviour:
       Enabled: 1
       Input:
         InputAction: {fileID: 1331712188117258433, guid: e8c83599c10464692899afcd1550dc4b, type: 3}
-        Gain: 1
-        LegacyInput: 
-        LegacyGain: 1
-        CancelDeltaTime: 1
-      InputValue: 1
+        Gain: 65
+        CancelDeltaTime: 0
+      InputValue: 0
       Driver:
         AccelTime: 0.2
         DecelTime: 0.2
@@ -20726,8 +20724,6 @@ MonoBehaviour:
       Input:
         InputAction: {fileID: 0}
         Gain: -1
-        LegacyInput: 
-        LegacyGain: 1
         CancelDeltaTime: 0
       InputValue: 0
       Driver:
@@ -20739,8 +20735,6 @@ MonoBehaviour:
       Input:
         InputAction: {fileID: 0}
         Gain: -1
-        LegacyInput: 
-        LegacyGain: 1
         CancelDeltaTime: 0
       InputValue: 0
       Driver:

@@ -97,7 +97,7 @@ namespace narkdagas.inputcontrol
                     ""name"": ""PlayerMove"",
                     ""type"": ""Value"",
                     ""id"": ""c5aebd5d-9773-4ef6-9794-2dce69cb433c"",
-                    ""expectedControlType"": ""Vector3"",
+                    ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
@@ -156,9 +156,9 @@ namespace narkdagas.inputcontrol
                     ""isPartOfComposite"": true
                 },
                 {
-                    ""name"": ""3D Vector"",
-                    ""id"": ""43f15634-2ae6-48e2-b9fe-d306193eea02"",
-                    ""path"": ""3DVector"",
+                    ""name"": ""2D Vector"",
+                    ""id"": ""72862b5c-114a-4b5c-b9be-dff89d689cca"",
+                    ""path"": ""2DVector"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -167,8 +167,30 @@ namespace narkdagas.inputcontrol
                     ""isPartOfComposite"": false
                 },
                 {
+                    ""name"": ""up"",
+                    ""id"": ""69b16094-4a0c-448a-9d68-40b19c36f61c"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""PlayerMove"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""0a126569-c58f-46fb-8f5b-ab3baea32e87"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""PlayerMove"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
                     ""name"": ""left"",
-                    ""id"": ""d10f2001-9f3f-428e-9cee-c01f208358fe"",
+                    ""id"": ""da929c54-01ae-43bf-b4e0-07c56a9642b5"",
                     ""path"": ""<Keyboard>/a"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -179,7 +201,7 @@ namespace narkdagas.inputcontrol
                 },
                 {
                     ""name"": ""right"",
-                    ""id"": ""6ca264be-243f-4c57-82df-6b6118bda9e8"",
+                    ""id"": ""4e0c483b-f981-4afd-98e5-b5f380424cc6"",
                     ""path"": ""<Keyboard>/d"",
                     ""interactions"": """",
                     ""processors"": """",
@@ -189,26 +211,15 @@ namespace narkdagas.inputcontrol
                     ""isPartOfComposite"": true
                 },
                 {
-                    ""name"": ""forward"",
-                    ""id"": ""3d898fe0-5957-4f53-a62a-29d9aeeb044f"",
-                    ""path"": ""<Keyboard>/w"",
+                    ""name"": """",
+                    ""id"": ""6a0342a5-aaac-4a00-bef6-0ea1f6bde66b"",
+                    ""path"": ""<Gamepad>/leftStick"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""PlayerMove"",
                     ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""backward"",
-                    ""id"": ""fbf76878-e78c-4868-a561-853cb15497a0"",
-                    ""path"": ""<Keyboard>/s"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""PlayerMove"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
+                    ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",

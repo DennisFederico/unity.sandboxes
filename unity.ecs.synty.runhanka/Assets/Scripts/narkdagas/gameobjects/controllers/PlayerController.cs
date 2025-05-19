@@ -68,14 +68,15 @@ namespace narkdagas.gameobjects.controllers {
         }
 
         public void OnPlayerMove(InputAction.CallbackContext context) {
-            currentMoveDirection = context.phase == InputActionPhase.Canceled ? Vector3.zero : context.ReadValue<Vector3>();
+            var moveDirection = context.phase == InputActionPhase.Canceled ? Vector2.zero : context.ReadValue<Vector2>();
             //We store the last forward direction when the player starts moving on Z axis (forward/backward)
-            if (forwardMoveInput == 0 && Mathf.Abs(currentMoveDirection.z) > 0.1f) {
+            //Do this before assigning forwardMoveInput
+            if (forwardMoveInput == 0 && Mathf.Abs(moveDirection.y) > 0.1f) {
                 lastForwardDirection = transform.forward;
-            } 
-            forwardMoveInput = currentMoveDirection.z;
-            sideMoveInput = currentMoveDirection.x;
-            isMoving = currentMoveDirection.sqrMagnitude > 0.01f;
+            }
+            isMoving = moveDirection.sqrMagnitude > 0.01f;
+            forwardMoveInput = moveDirection.y;
+            sideMoveInput = moveDirection.x;
         }
 
         private void OnPlayerJumpStateChanged(InputAction.CallbackContext context) {
@@ -109,11 +110,11 @@ namespace narkdagas.gameobjects.controllers {
             if (!isMoving) return;
             //Lateral movement (left/right) relative to the transform.right
             //Forward/backward movement relative to the transform.forward
-            Vector3 forward = useLastForwardDirection ? lastForwardDirection : transform.forward;
+            var forward = useLastForwardDirection ? lastForwardDirection : transform.forward;
             currentMoveDirection = (forward * forwardMoveInput + transform.right * sideMoveInput).normalized;
             verticalVelocity = VerticalForceCalculation();
             //Vector3.ClampMagnitude is used to prevent diagonal movement from being faster
-            Vector3 moveDirection = Vector3.ClampMagnitude(currentMoveDirection, 1f);
+            var moveDirection = Vector3.ClampMagnitude(currentMoveDirection, 1f);
             _characterController.Move((moveDirection * walkSpeed + verticalVelocity * Vector3.up) * Time.deltaTime);
         }
 
