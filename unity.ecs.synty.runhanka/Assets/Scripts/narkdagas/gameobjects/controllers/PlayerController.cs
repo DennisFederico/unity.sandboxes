@@ -8,8 +8,9 @@ namespace narkdagas.gameobjects.controllers {
     public class PlayerController : MonoBehaviour {
         [Header("Input and State - Internals")]
         [SerializeField] private float forwardMoveInput;
-
         [SerializeField] private float sideMoveInput;
+        [SerializeField] private bool useLastForwardDirection;
+        [SerializeField] private Vector3 lastForwardDirection;
         [SerializeField] private bool jumpPressed;
         [SerializeField] private Vector3 currentMoveDirection;
         [SerializeField] private bool isMoving;
@@ -18,7 +19,7 @@ namespace narkdagas.gameobjects.controllers {
         [Header("Movement Configuration")]
         [SerializeField] private float walkSpeed = 5f;
 
-        [SerializeField] private float sprintSpeed = 5f;
+        //[SerializeField] private float sprintSpeed = 5f;
         [SerializeField] private float turnSpeed = 1f;
         [SerializeField] private float rotationAlignThreshold = 10f;
         [SerializeField] private float jumpHeight = 1.5f;
@@ -67,14 +68,14 @@ namespace narkdagas.gameobjects.controllers {
         }
 
         public void OnPlayerMove(InputAction.CallbackContext context) {
-            Debug.Log($"Player Move {context.phase} {context.ReadValue<Vector3>()}");
             currentMoveDirection = context.phase == InputActionPhase.Canceled ? Vector3.zero : context.ReadValue<Vector3>();
+            //We store the last forward direction when the player starts moving on Z axis (forward/backward)
+            if (forwardMoveInput == 0 && Mathf.Abs(currentMoveDirection.z) > 0.1f) {
+                lastForwardDirection = transform.forward;
+            } 
             forwardMoveInput = currentMoveDirection.z;
             sideMoveInput = currentMoveDirection.x;
             isMoving = currentMoveDirection.sqrMagnitude > 0.01f;
-            if (isMoving) {
-                currentMoveDirection = (transform.forward * forwardMoveInput + transform.right * sideMoveInput).normalized;
-            }
         }
 
         private void OnPlayerJumpStateChanged(InputAction.CallbackContext context) {
@@ -95,7 +96,6 @@ namespace narkdagas.gameobjects.controllers {
         }
 
         private void Update() {
-            _draw.Line(transform.position, transform.position + transform.forward * 20, Color.blue);
             Move();
         }
 
@@ -106,13 +106,14 @@ namespace narkdagas.gameobjects.controllers {
         }
 
         private void GroundedMove() {
+            if (!isMoving) return;
+            //Lateral movement (left/right) relative to the transform.right
+            //Forward/backward movement relative to the transform.forward
+            Vector3 forward = useLastForwardDirection ? lastForwardDirection : transform.forward;
+            currentMoveDirection = (forward * forwardMoveInput + transform.right * sideMoveInput).normalized;
             verticalVelocity = VerticalForceCalculation();
-            //Lateral movement (left/right) relative to the transform.right (Vertical Input?)
-            //Forward/backward movement relative to the transform.forward (Horizontal Input?)
-            //Vector3 moveDirection = (transform.forward * currentMoveDirection.z + transform.right * currentMoveDirection.x).normalized;
-            //Using the last move direction, this is reset when the keys are released
             //Vector3.ClampMagnitude is used to prevent diagonal movement from being faster
-            Vector3 moveDirection = Vector3.ClampMagnitude(isMoving ? currentMoveDirection : Vector3.zero, 1f);
+            Vector3 moveDirection = Vector3.ClampMagnitude(currentMoveDirection, 1f);
             _characterController.Move((moveDirection * walkSpeed + verticalVelocity * Vector3.up) * Time.deltaTime);
         }
 
@@ -133,11 +134,6 @@ namespace narkdagas.gameobjects.controllers {
         }
 
         private void Turn() {
-            //Turn should only account on forward/backward movement in relation to the camera forward direction
-            // Turning logic: only if there's forward/back input
-            // THIS ALIGNS TO THE MOUSE POSITION
-            Ray ray = _mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-
             //USEFUL TIP TO RAYCAST OVER A PLANE
             //to prevent accidental ray hits on walls, enemies, or slopes
             // Plane aimPlane = new Plane(Vector3.up, transform.position);
@@ -146,17 +142,13 @@ namespace narkdagas.gameobjects.controllers {
             //     Vector3 hitPoint = ray.GetPoint(enter);
             //     ...
             // }
-
-
-            if (Physics.Raycast(ray, out RaycastHit hitInfo)) {
+            
+            if (TryGetRaycastHit(out var hitInfo)) {
                 Vector3 direction = hitInfo.point - transform.position;
                 direction.y = 0f;
 
                 //TRY THIS TO AVOID SPINNING WITH THE ROTATING CAMERA
                 //limit hitInfo.point to a forward-facing cone using Vector3.Dot(transform.forward, direction) > 0
-
-                _draw.Line(transform.position, transform.position + direction * 20, Color.goldenRod);
-                _draw.Line(transform.position, hitInfo.point, Color.green);
 
                 if (direction.sqrMagnitude > 1f) {
                     Quaternion targetRotation = Quaternion.LookRotation(direction, Vector3.up);
