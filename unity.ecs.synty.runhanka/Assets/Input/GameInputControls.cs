@@ -137,6 +137,15 @@ namespace narkdagas.inputcontrol
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Sprint"",
+                    ""type"": ""Button"",
+                    ""id"": ""26df8f0c-d06c-4bf4-8d3c-8551244c6a1e"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -176,7 +185,7 @@ namespace narkdagas.inputcontrol
                 {
                     ""name"": ""2D Vector"",
                     ""id"": ""72862b5c-114a-4b5c-b9be-dff89d689cca"",
-                    ""path"": ""2DVector"",
+                    ""path"": ""2DVector(mode=2)"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -271,6 +280,17 @@ namespace narkdagas.inputcontrol
                     ""action"": ""AimJoystick"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""583b7d94-5e48-4a84-898f-6f419000c016"",
+                    ""path"": ""<Keyboard>/shift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Sprint"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -284,6 +304,7 @@ namespace narkdagas.inputcontrol
             m_GameControls_AimJoystick = m_GameControls.FindAction("AimJoystick", throwIfNotFound: true);
             m_GameControls_PlayerJump = m_GameControls.FindAction("PlayerJump", throwIfNotFound: true);
             m_GameControls_RotateCamera = m_GameControls.FindAction("RotateCamera", throwIfNotFound: true);
+            m_GameControls_Sprint = m_GameControls.FindAction("Sprint", throwIfNotFound: true);
         }
 
         ~@GameInputControls()
@@ -369,6 +390,7 @@ namespace narkdagas.inputcontrol
         private readonly InputAction m_GameControls_AimJoystick;
         private readonly InputAction m_GameControls_PlayerJump;
         private readonly InputAction m_GameControls_RotateCamera;
+        private readonly InputAction m_GameControls_Sprint;
         /// <summary>
         /// Provides access to input actions defined in input action map "GameControls".
         /// </summary>
@@ -400,6 +422,10 @@ namespace narkdagas.inputcontrol
             /// Provides access to the underlying input action "GameControls/RotateCamera".
             /// </summary>
             public InputAction @RotateCamera => m_Wrapper.m_GameControls_RotateCamera;
+            /// <summary>
+            /// Provides access to the underlying input action "GameControls/Sprint".
+            /// </summary>
+            public InputAction @Sprint => m_Wrapper.m_GameControls_Sprint;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -441,6 +467,9 @@ namespace narkdagas.inputcontrol
                 @RotateCamera.started += instance.OnRotateCamera;
                 @RotateCamera.performed += instance.OnRotateCamera;
                 @RotateCamera.canceled += instance.OnRotateCamera;
+                @Sprint.started += instance.OnSprint;
+                @Sprint.performed += instance.OnSprint;
+                @Sprint.canceled += instance.OnSprint;
             }
 
             /// <summary>
@@ -467,6 +496,9 @@ namespace narkdagas.inputcontrol
                 @RotateCamera.started -= instance.OnRotateCamera;
                 @RotateCamera.performed -= instance.OnRotateCamera;
                 @RotateCamera.canceled -= instance.OnRotateCamera;
+                @Sprint.started -= instance.OnSprint;
+                @Sprint.performed -= instance.OnSprint;
+                @Sprint.canceled -= instance.OnSprint;
             }
 
             /// <summary>
@@ -542,6 +574,13 @@ namespace narkdagas.inputcontrol
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnRotateCamera(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Sprint" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnSprint(InputAction.CallbackContext context);
         }
     }
 }

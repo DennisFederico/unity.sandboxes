@@ -1,0 +1,220 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8569312581160561520
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9130673157423828004}
+  - component: {fileID: 2885167444821787931}
+  - component: {fileID: 8193288859372509936}
+  - component: {fileID: 4325435826091865457}
+  - component: {fileID: 3086321141624920265}
+  m_Layer: 0
+  m_Name: ItalianGangster
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &9130673157423828004
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8569312581160561520}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2128423634867316272}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!143 &2885167444821787931
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8569312581160561520}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.8
+  m_Radius: 0.25
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 1, z: 0}
+--- !u!114 &8193288859372509936
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8569312581160561520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb46794b561d48f28a781ff034c2fc74, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  forwardMoveInput: 0
+  sideMoveInput: 0
+  useLastForwardDirection: 0
+  lastForwardDirection: {x: 0, y: 0, z: 0}
+  jumpPressed: 0
+  currentMoveDirection: {x: 0, y: 0, z: 0}
+  currentMousePosition: {x: 0, y: 0}
+  joystickDelta: {x: 0, y: 0}
+  isMoving: 0
+  verticalVelocity: 0
+  walkSpeed: 5
+  turnSpeed: 15
+  rotationAlignThreshold: 15
+  jumpHeight: 1.5
+  gravity: -9.8
+  aimLinePrefab: {fileID: 9023714013226755492, guid: 550ed905df9734cf5a22264011182608, type: 3}
+  aimLineLength: 40
+--- !u!95 &4325435826091865457
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8569312581160561520}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &3086321141624920265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8569312581160561520}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fff0960ef4ea6e04eac66b4a7fd2189d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RigLayers:
+  - m_Rig: {fileID: 0}
+    m_Active: 1
+  m_Effectors: []
+--- !u!1001 &8390522912926255536
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 9130673157423828004}
+    m_Modifications:
+    - target: {fileID: 2701330486403131226, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2701330486403131226, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2701330486403131226, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6228193715605950111, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6228193715605950111, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6228193715605950111, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6228193715605950111, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7612855272624787318, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_Name
+      value: ItalianGangster_Model
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+--- !u!4 &2128423634867316272 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7636009465144225664, guid: 91a5ecf203b1c4aa6903d1d7d688c7a6, type: 3}
+  m_PrefabInstance: {fileID: 8390522912926255536}
+  m_PrefabAsset: {fileID: 0}
