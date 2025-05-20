@@ -24,9 +24,9 @@ namespace narkdagas.gameobjects.controllers {
 
         [Header("Animation")]
         private int _animatorMoveSpeed;
-
         private int _animatorJump;
         private int _animatorGrounded;
+        private int _animatorFiring;
 
         [Header("Input and State - Internals")]
         [SerializeField] private float forwardMoveInput;
@@ -37,6 +37,7 @@ namespace narkdagas.gameobjects.controllers {
         [SerializeField] private Vector3 lastForwardDirection;
         [SerializeField] private bool sprinting;
         [SerializeField] private bool jumpPressed;
+        [SerializeField] private bool firing;
         [SerializeField] private Vector3 currentMoveDirection;
         [SerializeField] private Vector2 currentMousePosition;
         [SerializeField] private Vector2 joystickDelta;
@@ -50,11 +51,8 @@ namespace narkdagas.gameobjects.controllers {
         private Animator _animator;
         private Camera _mainCamera;
         private LineRenderer _aimLine;
-        // private CommandBuilder _draw;
 
         private void Awake() {
-            // _draw = Draw.editor;
-            // _draw.WithDuration(1f);
             _characterController = GetComponent<CharacterController>();
             _animator = GetComponent<Animator>();
             _mainCamera ??= Camera.main;
@@ -74,6 +72,8 @@ namespace narkdagas.gameobjects.controllers {
             _gameInputControls.GameControls.AimJoystick.canceled += OnAimJoystick;
             _gameInputControls.GameControls.Sprint.performed += OnSprint;
             _gameInputControls.GameControls.Sprint.canceled += OnSprint;
+            _gameInputControls.GameControls.Fire.performed += OnFiring;
+            _gameInputControls.GameControls.Fire.canceled += OnFiring;
         }
 
         private void OnDisable() {
@@ -86,8 +86,10 @@ namespace narkdagas.gameobjects.controllers {
             _gameInputControls.GameControls.AimJoystick.started -= OnAimJoystick;
             _gameInputControls.GameControls.AimJoystick.performed -= OnAimJoystick;
             _gameInputControls.GameControls.AimJoystick.canceled -= OnAimJoystick;
-            _gameInputControls.GameControls.Sprint.performed += OnSprint;
-            _gameInputControls.GameControls.Sprint.canceled += OnSprint;
+            _gameInputControls.GameControls.Sprint.performed -= OnSprint;
+            _gameInputControls.GameControls.Sprint.canceled -= OnSprint;
+            _gameInputControls.GameControls.Fire.performed -= OnFiring;
+            _gameInputControls.GameControls.Fire.canceled -= OnFiring;
             _gameInputControls.GameControls.Disable();
         }
 
@@ -128,6 +130,15 @@ namespace narkdagas.gameobjects.controllers {
             };
         }
 
+        private void OnFiring(InputAction.CallbackContext context) {
+            firing = context.phase switch {
+                InputActionPhase.Performed => true,
+                InputActionPhase.Canceled => false,
+                _ => firing
+            };
+        }
+
+        
         private void Start() {
             SetupAnimationIds();
             GameObject lineObj = Instantiate(aimLinePrefab, transform.position, Quaternion.identity);
@@ -141,17 +152,14 @@ namespace narkdagas.gameobjects.controllers {
             _animatorMoveSpeed = Animator.StringToHash("MoveSpeed");
             _animatorJump = Animator.StringToHash("Jump");
             _animatorGrounded = Animator.StringToHash("Grounded");
+            _animatorFiring = Animator.StringToHash("Firing");
         }
 
         private void Update() {
-            Move();
-        }
-
-        private void Move() {
             UpdateSpeed();
-            GroundedMove();
-            ApplyGravity();
+            Move();
             Turn();
+            ApplyGravity();
             SyncAnimation();
             UpdateAimLine();
         }
@@ -160,7 +168,7 @@ namespace narkdagas.gameobjects.controllers {
             moveSpeed = Mathf.Lerp(moveSpeed, sprinting ? sprintSpeed : walkSpeed, sprintAcceleration * Time.deltaTime);
         }
 
-        private void GroundedMove() {
+        private void Move() {
             if (!isMoving) return;
             //Lateral movement (left/right) relative to the transform.right
             //Forward/backward movement relative to the transform.forward
@@ -223,6 +231,7 @@ namespace narkdagas.gameobjects.controllers {
             _animator.SetBool(_animatorGrounded, _characterController.isGrounded);
             if (jumpPressed) _animator.SetTrigger(_animatorJump);
             else _animator.ResetTrigger(_animatorJump);
+            _animator.SetBool(_animatorFiring, firing);
         }
 
         //TODO Refactor with the TURN method to re-use the raycast
@@ -250,11 +259,11 @@ namespace narkdagas.gameobjects.controllers {
             _aimLine.SetPosition(1, end);
         }
 
-        private bool TryGetRaycastHit(out RaycastHit hitInfo, Vector2 aimPosition) {
-            // Ray ray = _mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-            Ray ray = _mainCamera.ScreenPointToRay(aimPosition);
-            return Physics.Raycast(ray, out hitInfo);
-        }
+        // private bool TryGetRaycastHit(out RaycastHit hitInfo, Vector2 aimPosition) {
+        //     // Ray ray = _mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
+        //     Ray ray = _mainCamera.ScreenPointToRay(aimPosition);
+        //     return Physics.Raycast(ray, out hitInfo);
+        // }
 
         private bool TryGetRaycastPlaneHit(out Vector3 hitPosition, Vector2 aimPosition, Vector3 normal, Vector3 pointInPlane) {
             var aimPlane = new Plane(normal, pointInPlane);

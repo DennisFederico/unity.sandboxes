@@ -146,6 +146,15 @@ namespace narkdagas.inputcontrol
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Fire"",
+                    ""type"": ""Button"",
+                    ""id"": ""4018af19-aef6-4b7c-9158-5a9914685ee7"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -291,6 +300,17 @@ namespace narkdagas.inputcontrol
                     ""action"": ""Sprint"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""11fc654f-6080-484c-b42e-e5a1f8c7e23d"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Fire"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -305,6 +325,7 @@ namespace narkdagas.inputcontrol
             m_GameControls_PlayerJump = m_GameControls.FindAction("PlayerJump", throwIfNotFound: true);
             m_GameControls_RotateCamera = m_GameControls.FindAction("RotateCamera", throwIfNotFound: true);
             m_GameControls_Sprint = m_GameControls.FindAction("Sprint", throwIfNotFound: true);
+            m_GameControls_Fire = m_GameControls.FindAction("Fire", throwIfNotFound: true);
         }
 
         ~@GameInputControls()
@@ -391,6 +412,7 @@ namespace narkdagas.inputcontrol
         private readonly InputAction m_GameControls_PlayerJump;
         private readonly InputAction m_GameControls_RotateCamera;
         private readonly InputAction m_GameControls_Sprint;
+        private readonly InputAction m_GameControls_Fire;
         /// <summary>
         /// Provides access to input actions defined in input action map "GameControls".
         /// </summary>
@@ -426,6 +448,10 @@ namespace narkdagas.inputcontrol
             /// Provides access to the underlying input action "GameControls/Sprint".
             /// </summary>
             public InputAction @Sprint => m_Wrapper.m_GameControls_Sprint;
+            /// <summary>
+            /// Provides access to the underlying input action "GameControls/Fire".
+            /// </summary>
+            public InputAction @Fire => m_Wrapper.m_GameControls_Fire;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -470,6 +496,9 @@ namespace narkdagas.inputcontrol
                 @Sprint.started += instance.OnSprint;
                 @Sprint.performed += instance.OnSprint;
                 @Sprint.canceled += instance.OnSprint;
+                @Fire.started += instance.OnFire;
+                @Fire.performed += instance.OnFire;
+                @Fire.canceled += instance.OnFire;
             }
 
             /// <summary>
@@ -499,6 +528,9 @@ namespace narkdagas.inputcontrol
                 @Sprint.started -= instance.OnSprint;
                 @Sprint.performed -= instance.OnSprint;
                 @Sprint.canceled -= instance.OnSprint;
+                @Fire.started -= instance.OnFire;
+                @Fire.performed -= instance.OnFire;
+                @Fire.canceled -= instance.OnFire;
             }
 
             /// <summary>
@@ -581,6 +613,13 @@ namespace narkdagas.inputcontrol
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnSprint(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Fire" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnFire(InputAction.CallbackContext context);
         }
     }
 }
