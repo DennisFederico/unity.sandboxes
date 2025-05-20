@@ -6,25 +6,31 @@ namespace narkdagas.gameobjects.controllers {
     [RequireComponent(typeof(CharacterController))]
     public class PlayerController : MonoBehaviour {
         //TODO... Implement Sprint duration and recovery (fatigue)
-        
+
         [Header("Movement Configuration")]
         [SerializeField] private float walkSpeed = 5f;
+
         [SerializeField] private float sprintSpeed = 10f;
         [SerializeField] private float sprintAcceleration = 1f;
         [SerializeField] private float turnSpeed = 1f;
         [SerializeField] private float rotationAlignThreshold = 10f;
         [SerializeField] private float jumpHeight = 1.5f;
         [SerializeField] private float gravity = -9.8f;
-        
+
         [Header("Aim Line")]
         [SerializeField] public GameObject aimLinePrefab;
+
         [SerializeField] public float aimLineLength = 10f;
 
         [Header("Animation")]
         private int _animatorMoveSpeed;
-        
+
+        private int _animatorJump;
+        private int _animatorGrounded;
+
         [Header("Input and State - Internals")]
         [SerializeField] private float forwardMoveInput;
+
         [SerializeField] private float sideMoveInput;
         [SerializeField] private float moveSpeed;
         [SerializeField] private bool useLastForwardDirection;
@@ -36,9 +42,10 @@ namespace narkdagas.gameobjects.controllers {
         [SerializeField] private Vector2 joystickDelta;
         [SerializeField] private bool isMoving;
         [SerializeField] private float verticalVelocity;
-        
+
         [Header("Internals")]
         private CharacterController _characterController;
+
         private GameInputControls _gameInputControls;
         private Animator _animator;
         private Camera _mainCamera;
@@ -59,7 +66,6 @@ namespace narkdagas.gameobjects.controllers {
             _gameInputControls.GameControls.PlayerMove.started += OnPlayerMove;
             _gameInputControls.GameControls.PlayerMove.performed += OnPlayerMove;
             _gameInputControls.GameControls.PlayerMove.canceled += OnPlayerMove;
-            _gameInputControls.GameControls.PlayerJump.started += OnPlayerJumpStateChanged;
             _gameInputControls.GameControls.PlayerJump.performed += OnPlayerJumpStateChanged;
             _gameInputControls.GameControls.PlayerJump.canceled += OnPlayerJumpStateChanged;
             _gameInputControls.GameControls.AimMouse.performed += OnAimMouse;
@@ -74,7 +80,6 @@ namespace narkdagas.gameobjects.controllers {
             _gameInputControls.GameControls.PlayerMove.started -= OnPlayerMove;
             _gameInputControls.GameControls.PlayerMove.performed -= OnPlayerMove;
             _gameInputControls.GameControls.PlayerMove.canceled -= OnPlayerMove;
-            _gameInputControls.GameControls.PlayerJump.started -= OnPlayerJumpStateChanged;
             _gameInputControls.GameControls.PlayerJump.performed -= OnPlayerJumpStateChanged;
             _gameInputControls.GameControls.PlayerJump.canceled -= OnPlayerJumpStateChanged;
             _gameInputControls.GameControls.AimMouse.performed -= OnAimMouse;
@@ -93,6 +98,7 @@ namespace narkdagas.gameobjects.controllers {
             if (forwardMoveInput == 0 && Mathf.Abs(moveDirection.y) > 0.1f) {
                 lastForwardDirection = transform.forward;
             }
+
             isMoving = moveDirection.sqrMagnitude > 0.01f;
             forwardMoveInput = moveDirection.y;
             sideMoveInput = moveDirection.x;
@@ -100,22 +106,20 @@ namespace narkdagas.gameobjects.controllers {
 
         public void OnAimMouse(InputAction.CallbackContext context) {
             currentMousePosition = context.phase == InputActionPhase.Canceled ? Vector2.zero : context.ReadValue<Vector2>();
-            
         }
 
         public void OnAimJoystick(InputAction.CallbackContext context) {
             joystickDelta = context.phase == InputActionPhase.Canceled ? Vector2.zero : context.ReadValue<Vector2>();
         }
-        
+
         private void OnPlayerJumpStateChanged(InputAction.CallbackContext context) {
             jumpPressed = context.phase switch {
-                InputActionPhase.Started => true,
-                InputActionPhase.Performed => false,
+                InputActionPhase.Performed => true,
                 InputActionPhase.Canceled => false,
                 _ => jumpPressed
             };
         }
-        
+
         private void OnSprint(InputAction.CallbackContext context) {
             sprinting = context.phase switch {
                 InputActionPhase.Performed => true,
@@ -135,6 +139,8 @@ namespace narkdagas.gameobjects.controllers {
 
         private void SetupAnimationIds() {
             _animatorMoveSpeed = Animator.StringToHash("MoveSpeed");
+            _animatorJump = Animator.StringToHash("Jump");
+            _animatorGrounded = Animator.StringToHash("Grounded");
         }
 
         private void Update() {
@@ -144,11 +150,12 @@ namespace narkdagas.gameobjects.controllers {
         private void Move() {
             UpdateSpeed();
             GroundedMove();
+            ApplyGravity();
             Turn();
             SyncAnimation();
             UpdateAimLine();
         }
-        
+
         private void UpdateSpeed() {
             moveSpeed = Mathf.Lerp(moveSpeed, sprinting ? sprintSpeed : walkSpeed, sprintAcceleration * Time.deltaTime);
         }
@@ -159,10 +166,16 @@ namespace narkdagas.gameobjects.controllers {
             //Forward/backward movement relative to the transform.forward
             var forward = useLastForwardDirection ? lastForwardDirection : transform.forward;
             currentMoveDirection = (forward * forwardMoveInput + transform.right * sideMoveInput).normalized;
-            verticalVelocity = VerticalForceCalculation();
+            //verticalVelocity = VerticalForceCalculation();
             //Vector3.ClampMagnitude is used to prevent diagonal movement from being faster
             var moveDirection = Vector3.ClampMagnitude(currentMoveDirection, 1f);
-            _characterController.Move((moveDirection * moveSpeed + verticalVelocity * Vector3.up) * Time.deltaTime);
+            //_characterController.Move((moveDirection * moveSpeed + verticalVelocity * Vector3.up) * Time.deltaTime);
+            _characterController.Move(moveDirection * (moveSpeed * Time.deltaTime));
+        }
+
+        private void ApplyGravity() {
+            verticalVelocity = VerticalForceCalculation();
+            _characterController.Move(Vector3.up * (verticalVelocity * Time.deltaTime));
         }
 
         private float VerticalForceCalculation() {
@@ -182,13 +195,12 @@ namespace narkdagas.gameobjects.controllers {
         }
 
         private void Turn() {
-            
             //TODO - Handle joystickDelta
             // if (TryGetRaycastHit(out var hitInfo, Mouse.current.position.ReadValue())) {
             // if (TryGetRaycastHit(out var hitInfo, currentMousePosition)) {
             //     Vector3 direction = hitInfo.point - transform.position;
             //     direction.y = 0f;
-            if (TryGetRaycastPlaneHit(out var hitPosition, currentMousePosition, Vector3.up,  transform.position + Vector3.up * 0.5f)) {
+            if (TryGetRaycastPlaneHit(out var hitPosition, currentMousePosition, Vector3.up, transform.position + Vector3.up * 0.5f)) {
                 Vector3 direction = hitPosition - transform.position;
                 direction.y = 0f;
                 //TRY THIS TO AVOID SPINNING WITH THE ROTATING CAMERA
@@ -208,8 +220,11 @@ namespace narkdagas.gameobjects.controllers {
             //TODO - Refactor .. this only accounts for "positive value" (Abs) and also when side move
             //Need negative values for backward movement
             _animator.SetFloat(_animatorMoveSpeed, moveSpeed * Mathf.Max(Mathf.Abs(forwardMoveInput), Mathf.Abs(sideMoveInput)));
+            _animator.SetBool(_animatorGrounded, _characterController.isGrounded);
+            if (jumpPressed) _animator.SetTrigger(_animatorJump);
+            else _animator.ResetTrigger(_animatorJump);
         }
-        
+
         //TODO Refactor with the TURN method to re-use the raycast
         private void UpdateAimLine() {
             //TODOS: ---
@@ -217,30 +232,30 @@ namespace narkdagas.gameobjects.controllers {
             //Add a glow or pulse effect on the line’s material
             //Use the direction * maxLength unless hitInfo.distance < maxLength (to clip at obstacles)
             //make the line turn red when aimed at an enemy or dynamically bend it based on projectile arcs later on?
-            
+
             Vector3 start = transform.position + Vector3.up * 0.5f; // Slightly above the ground
             Vector3 end = start + transform.forward * aimLineLength; // Default direction
-            
+
             // if (TryGetRaycastHit(out var hitInfo, currentMousePosition)) {
             //     Vector3 direction = (hitInfo.point - start).normalized;
             //     end = start + direction * aimLineLength;
             // }
-            
+
             if (TryGetRaycastPlaneHit(out var hitPosition, currentMousePosition, Vector3.up, transform.position + Vector3.up * 0.5f)) {
-                Vector3 direction = (hitPosition - start).normalized; 
+                Vector3 direction = (hitPosition - start).normalized;
                 end = start + direction * aimLineLength;
             }
 
             _aimLine.SetPosition(0, start);
             _aimLine.SetPosition(1, end);
         }
-        
+
         private bool TryGetRaycastHit(out RaycastHit hitInfo, Vector2 aimPosition) {
             // Ray ray = _mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
             Ray ray = _mainCamera.ScreenPointToRay(aimPosition);
             return Physics.Raycast(ray, out hitInfo);
         }
-        
+
         private bool TryGetRaycastPlaneHit(out Vector3 hitPosition, Vector2 aimPosition, Vector3 normal, Vector3 pointInPlane) {
             var aimPlane = new Plane(normal, pointInPlane);
             var ray = _mainCamera.ScreenPointToRay(aimPosition);
@@ -248,6 +263,7 @@ namespace narkdagas.gameobjects.controllers {
                 hitPosition = ray.GetPoint(hitDistance);
                 return true;
             }
+
             hitPosition = Vector3.zero;
             return false;
         }
