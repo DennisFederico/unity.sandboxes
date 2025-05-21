@@ -98,7 +98,7 @@ namespace narkdagas.inputcontrol
                     ""type"": ""Value"",
                     ""id"": ""c5aebd5d-9773-4ef6-9794-2dce69cb433c"",
                     ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
+                    ""processors"": ""NormalizeVector2"",
                     ""interactions"": """",
                     ""initialStateCheck"": true
                 },

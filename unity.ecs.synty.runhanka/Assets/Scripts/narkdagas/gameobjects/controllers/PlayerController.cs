@@ -5,15 +5,13 @@ using UnityEngine.InputSystem;
 namespace narkdagas.gameobjects.controllers {
     [RequireComponent(typeof(CharacterController))]
     public class PlayerController : MonoBehaviour {
-        
-        //TODO... Add Acceleration and used speed to cap the max speed
         //TODO... Implement Sprint duration and recovery (fatigue)
 
         [Header("Movement Configuration")]
         [SerializeField] private float walkSpeed = 5f;
-
+        [SerializeField] private float walkAcceleration = 2f;
         [SerializeField] private float sprintSpeed = 10f;
-        [SerializeField] private float sprintAcceleration = 1f;
+        [SerializeField] private float sprintAcceleration = 10f;
         [SerializeField] private float turnSpeed = 1f;
         [SerializeField] private float rotationAlignThreshold = 10f;
         [SerializeField] private float jumpHeight = 1.5f;
@@ -32,9 +30,9 @@ namespace narkdagas.gameobjects.controllers {
         private int _animatorGrounded;
 
         [Header("Input and State - Internals")]
-        [SerializeField] private float forwardMoveInput;
-
-        [SerializeField] private float lateralMoveInput;
+        // [SerializeField] private float forwardMoveInput;
+        // [SerializeField] private float lateralMoveInput;
+        [SerializeField] private Vector2 moveInputDirection;
         [SerializeField] private float moveSpeed;
         [SerializeField] private bool useLastForwardDirection;
         [SerializeField] private Vector3 lastForwardDirection;
@@ -97,16 +95,12 @@ namespace narkdagas.gameobjects.controllers {
         }
 
         public void OnPlayerMove(InputAction.CallbackContext context) {
-            var moveDirection = context.phase == InputActionPhase.Canceled ? Vector2.zero : context.ReadValue<Vector2>();
+            moveInputDirection = context.phase == InputActionPhase.Canceled ? Vector2.zero : context.ReadValue<Vector2>();
             //We store the last forward direction when the player starts moving on Z axis (forward/backward)
             //Do this before assigning forwardMoveInput
-            if (forwardMoveInput == 0 && Mathf.Abs(moveDirection.y) > 0.1f) {
+            if (moveInputDirection.y == 0 && Mathf.Abs(moveInputDirection.y) > 0.1f) {
                 lastForwardDirection = transform.forward;
             }
-
-            isMoving = moveDirection.sqrMagnitude > 0.01f;
-            forwardMoveInput = moveDirection.y;
-            lateralMoveInput = moveDirection.x;
         }
 
         public void OnAimMouse(InputAction.CallbackContext context) {
@@ -140,7 +134,6 @@ namespace narkdagas.gameobjects.controllers {
                 _ => firing
             };
         }
-
         
         private void Start() {
             SetupAnimationIds();
@@ -169,20 +162,23 @@ namespace narkdagas.gameobjects.controllers {
         }
 
         private void UpdateSpeed() {
-            moveSpeed = Mathf.Lerp(moveSpeed, sprinting ? sprintSpeed : walkSpeed, sprintAcceleration * Time.deltaTime);
+            isMoving = moveInputDirection.sqrMagnitude > 0.01f;
+            // Acceleration is nice but is breaking animations
+            moveSpeed = isMoving ? Mathf.Lerp(moveSpeed, sprinting ? sprintSpeed : walkSpeed,  sprintAcceleration * Time.deltaTime) : 0f;
+            // moveSpeed = isMoving ? Mathf.Lerp(moveSpeed, sprinting ? sprintSpeed : walkSpeed, (sprinting ? sprintAcceleration : walkAcceleration) * Time.deltaTime) : 0f;
+            // moveSpeed = isMoving ? Mathf.Lerp(moveSpeed, sprinting ? sprintSpeed : walkSpeed, (sprinting ? sprintAcceleration : walkAcceleration) * Time.deltaTime) : Mathf.Lerp(moveSpeed, 0f, sprintAcceleration * Time.deltaTime);
         }
 
         private void Move() {
-            if (!isMoving) return;
-            //Lateral movement (left/right) relative to the transform.right
-            //Forward/backward movement relative to the transform.forward
-            var forward = useLastForwardDirection ? lastForwardDirection : transform.forward;
-            currentMoveDirection = (forward * forwardMoveInput + transform.right * lateralMoveInput).normalized;
-            //verticalVelocity = VerticalForceCalculation();
-            //Vector3.ClampMagnitude is used to prevent diagonal movement from being faster
-            var moveDirection = Vector3.ClampMagnitude(currentMoveDirection, 1f);
-            //_characterController.Move((moveDirection * moveSpeed + verticalVelocity * Vector3.up) * Time.deltaTime);
-            _characterController.Move(moveDirection * (moveSpeed * Time.deltaTime));
+            if (isMoving) {
+                //Lateral movement (left/right) relative to the transform.right
+                //Forward/backward movement relative to the transform.forward
+                var forward = useLastForwardDirection ? lastForwardDirection : transform.forward;
+                currentMoveDirection = forward * moveInputDirection.y + transform.right * moveInputDirection.x;
+                _characterController.Move(currentMoveDirection * (moveSpeed * Time.deltaTime));
+            } else {
+                currentMoveDirection = Vector3.zero;
+            }
         }
 
         private void ApplyGravity() {
@@ -231,8 +227,8 @@ namespace narkdagas.gameobjects.controllers {
         private void SyncAnimation() {
             //TODO - Refactor .. this only accounts for "positive value" (Abs) and also when side move
             //Need negative values for backward movement
-            _animator.SetFloat(_animatorForwardMovement, forwardMoveInput);
-            _animator.SetFloat(_animatorLateralMovement, lateralMoveInput);
+            _animator.SetFloat(_animatorForwardMovement, currentMoveDirection.z * moveSpeed);
+            _animator.SetFloat(_animatorLateralMovement, currentMoveDirection.x * moveSpeed);
             _animator.SetBool(_animatorGrounded, _characterController.isGrounded);
             if (jumpPressed) _animator.SetTrigger(_animatorJump);
             else _animator.ResetTrigger(_animatorJump);
@@ -249,11 +245,6 @@ namespace narkdagas.gameobjects.controllers {
 
             Vector3 start = transform.position + Vector3.up * 0.5f; // Slightly above the ground
             Vector3 end = start + transform.forward * aimLineLength; // Default direction
-
-            // if (TryGetRaycastHit(out var hitInfo, currentMousePosition)) {
-            //     Vector3 direction = (hitInfo.point - start).normalized;
-            //     end = start + direction * aimLineLength;
-            // }
 
             if (TryGetRaycastPlaneHit(out var hitPosition, currentMousePosition, Vector3.up, transform.position + Vector3.up * 0.5f)) {
                 Vector3 direction = (hitPosition - start).normalized;
