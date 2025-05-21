@@ -4,9 +4,7 @@ using UnityEngine.InputSystem;
 
 namespace narkdagas.gameobjects.controllers {
     [RequireComponent(typeof(CharacterController))]
-    public class PlayerController : MonoBehaviour {
-        
-        //TODO... Add Acceleration and used speed to cap the max speed
+    public class PlayerControllerBasic : MonoBehaviour {
         //TODO... Implement Sprint duration and recovery (fatigue)
 
         [Header("Movement Configuration")]
@@ -25,16 +23,15 @@ namespace narkdagas.gameobjects.controllers {
         [SerializeField] public float aimLineLength = 10f;
 
         [Header("Animation")]
-        private int _animatorForwardMovement;
-        private int _animatorLateralMovement;
-        private int _animatorFiring;
+        private int _animatorMoveSpeed;
         private int _animatorJump;
         private int _animatorGrounded;
+        private int _animatorFiring;
 
         [Header("Input and State - Internals")]
         [SerializeField] private float forwardMoveInput;
 
-        [SerializeField] private float lateralMoveInput;
+        [SerializeField] private float sideMoveInput;
         [SerializeField] private float moveSpeed;
         [SerializeField] private bool useLastForwardDirection;
         [SerializeField] private Vector3 lastForwardDirection;
@@ -106,7 +103,7 @@ namespace narkdagas.gameobjects.controllers {
 
             isMoving = moveDirection.sqrMagnitude > 0.01f;
             forwardMoveInput = moveDirection.y;
-            lateralMoveInput = moveDirection.x;
+            sideMoveInput = moveDirection.x;
         }
 
         public void OnAimMouse(InputAction.CallbackContext context) {
@@ -152,11 +149,10 @@ namespace narkdagas.gameobjects.controllers {
         }
 
         private void SetupAnimationIds() {
-            _animatorForwardMovement = Animator.StringToHash("forwardMovement");
-            _animatorLateralMovement = Animator.StringToHash("lateralMovement");
-            _animatorFiring = Animator.StringToHash("firing");
-            _animatorJump = Animator.StringToHash("jump");
-            _animatorGrounded = Animator.StringToHash("grounded");
+            _animatorMoveSpeed = Animator.StringToHash("MoveSpeed");
+            _animatorJump = Animator.StringToHash("Jump");
+            _animatorGrounded = Animator.StringToHash("Grounded");
+            _animatorFiring = Animator.StringToHash("Firing");
         }
 
         private void Update() {
@@ -177,7 +173,7 @@ namespace narkdagas.gameobjects.controllers {
             //Lateral movement (left/right) relative to the transform.right
             //Forward/backward movement relative to the transform.forward
             var forward = useLastForwardDirection ? lastForwardDirection : transform.forward;
-            currentMoveDirection = (forward * forwardMoveInput + transform.right * lateralMoveInput).normalized;
+            currentMoveDirection = (forward * forwardMoveInput + transform.right * sideMoveInput).normalized;
             //verticalVelocity = VerticalForceCalculation();
             //Vector3.ClampMagnitude is used to prevent diagonal movement from being faster
             var moveDirection = Vector3.ClampMagnitude(currentMoveDirection, 1f);
@@ -231,8 +227,7 @@ namespace narkdagas.gameobjects.controllers {
         private void SyncAnimation() {
             //TODO - Refactor .. this only accounts for "positive value" (Abs) and also when side move
             //Need negative values for backward movement
-            _animator.SetFloat(_animatorForwardMovement, forwardMoveInput);
-            _animator.SetFloat(_animatorLateralMovement, lateralMoveInput);
+            _animator.SetFloat(_animatorMoveSpeed, moveSpeed * Mathf.Max(Mathf.Abs(forwardMoveInput), Mathf.Abs(sideMoveInput)));
             _animator.SetBool(_animatorGrounded, _characterController.isGrounded);
             if (jumpPressed) _animator.SetTrigger(_animatorJump);
             else _animator.ResetTrigger(_animatorJump);
