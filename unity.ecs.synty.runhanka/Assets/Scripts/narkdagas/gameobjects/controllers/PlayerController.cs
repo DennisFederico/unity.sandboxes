@@ -5,11 +5,15 @@ using UnityEngine.InputSystem;
 namespace narkdagas.gameobjects.controllers {
     [RequireComponent(typeof(CharacterController))]
     public class PlayerController : MonoBehaviour {
+        //TODO Deceleration can be done, try again, and cap to the max speed ---use bool for left/right forward/backward input press and velocities accordingly
+        //Deceleration to walk speed and below that just stop.. same for acceleration, instant to walkSpeed and accelerate to sprint speed
+        
+        
         //TODO... Implement Sprint duration and recovery (fatigue)
 
         [Header("Movement Configuration")]
         [SerializeField] private float walkSpeed = 5f;
-        [SerializeField] private float walkAcceleration = 2f;
+        //[SerializeField] private float walkAcceleration = 2f;
         [SerializeField] private float sprintSpeed = 10f;
         [SerializeField] private float sprintAcceleration = 10f;
         [SerializeField] private float turnSpeed = 1f;
